@@ -1,0 +1,26 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 7ed6dc2455c912a4fb9c2c1424729308, type: 3}
+  m_Name: ProcGen Config
+  m_EditorClassIdentifier: 
+  Biomes:
+  - Biome: {fileID: 11400000, guid: bf33bf46483be1b4f802be630b9fe284, type: 2}
+    Weighting: 0.5
+  - Biome: {fileID: 11400000, guid: 2303d9560573a0b4d9492fa7a7edcb40, type: 2}
+    Weighting: 0.15
+  - Biome: {fileID: 11400000, guid: 77d03dfb8e3f0ea458ca62d19b5d52c4, type: 2}
+    Weighting: 0.25
+  - Biome: {fileID: 11400000, guid: 6773118910df8c44f8a6853a050f4927, type: 2}
+    Weighting: 0.5
+  - Biome: {fileID: 11400000, guid: 9e3ce2a4747672b4d9393ab5cfb84951, type: 2}
+    Weighting: 0.5
+  BiomeSeedPointDensity: 0.1
