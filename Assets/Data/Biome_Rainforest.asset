@@ -18,3 +18,11 @@ MonoBehaviour:
   MinDecayRate: 0.1
   MaxDecayRate: 0.2
   HeightModifier: {fileID: 4316101915917840975, guid: ad966fb6e759b1a418c596ca3404b279, type: 3}
+  TerrainPainter: {fileID: 6126891364327839091, guid: bcd5bb4038c94c447bff56514b9cd728, type: 3}
+  Textures:
+  - UniqueID: Rainforest-Grass
+    Diffuse: {fileID: 2800000, guid: e96d0b370a8871148945e2ad5953155c, type: 3}
+    NormalMap: {fileID: 0}
+  - UniqueID: Rainforest-Rock
+    Diffuse: {fileID: 2800000, guid: f3bf1330db471cc4b953400d074a9668, type: 3}
+    NormalMap: {fileID: 0}

@@ -18,3 +18,11 @@ MonoBehaviour:
   MinDecayRate: 0.1
   MaxDecayRate: 0.2
   HeightModifier: {fileID: 4316101915917840975, guid: 501ecc3bfd5f99e4d9f97782adf5933e, type: 3}
+  TerrainPainter: {fileID: 6126891364327839091, guid: 057db92dc4b072049a1eb05c491d9bf8, type: 3}
+  Textures:
+  - UniqueID: Swamp-Rock
+    Diffuse: {fileID: 2800000, guid: f3bf1330db471cc4b953400d074a9668, type: 3}
+    NormalMap: {fileID: 0}
+  - UniqueID: Swamp-Swamp
+    Diffuse: {fileID: 2800000, guid: 7b65f48823b56444790848974b11c0af, type: 3}
+    NormalMap: {fileID: 0}

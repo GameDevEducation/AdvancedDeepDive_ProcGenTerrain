@@ -2,10 +2,17 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
+#if UNITY_EDITOR
+using UnityEditor;
+using UnityEngine.SceneManagement;
+#endif // UNITY_EDITOR
+
 public class ProcGenManager : MonoBehaviour
 {
     [SerializeField] ProcGenConfigSO Config;
     [SerializeField] Terrain TargetTerrain;
+
+    Dictionary<string, int> BiomeTextureToTerrainLayerIndex = new Dictionary<string, int>();
 
 #if UNITY_EDITOR
     byte[,] BiomeMap_LowResolution;
@@ -28,10 +35,19 @@ public class ProcGenManager : MonoBehaviour
     }
 
 #if UNITY_EDITOR
+    public void RegenerateTextures()
+    {
+        Perform_LayerSetup();    
+    }
+    
     public void RegenerateWorld()
     {
         // cache the map resolution
         int mapResolution = TargetTerrain.terrainData.heightmapResolution;
+        int alphaMapResolution = TargetTerrain.terrainData.alphamapResolution;
+
+        // Generate the texture mapping
+        Perform_GenerateTextureMapping();
 
         // generate the low resolution biome map
         Perform_BiomeGeneration_LowResolution((int)Config.BiomeMapResolution);
@@ -41,6 +57,91 @@ public class ProcGenManager : MonoBehaviour
 
         // update the terrain heights
         Perform_HeightMapModification(mapResolution);
+
+        // paint the terrain
+        Perform_TerrainPainting(mapResolution, alphaMapResolution);
+    }
+
+    void Perform_GenerateTextureMapping()
+    {
+        BiomeTextureToTerrainLayerIndex.Clear();
+
+        // iterate over the biomes
+        int layerIndex = 0;
+        foreach(var biomeMetadata in Config.Biomes)
+        {
+            var biome = biomeMetadata.Biome;
+
+            // iterate over the textures
+            foreach(var biomeTexture in biome.Textures)
+            {
+                // add to the layer map
+                BiomeTextureToTerrainLayerIndex[biomeTexture.UniqueID] = layerIndex;
+                ++layerIndex;
+            }
+        }
+    }
+
+    void Perform_LayerSetup()
+    {
+        // delete any existing layers
+        if (TargetTerrain.terrainData.terrainLayers != null || TargetTerrain.terrainData.terrainLayers.Length > 0)
+        {
+            Undo.RecordObject(TargetTerrain, "Clearing previous layers");
+
+            // build up list of asset paths for each layer
+            List<string> layersToDelete = new List<string>();
+            foreach(var layer in TargetTerrain.terrainData.terrainLayers)
+            {
+                if (layer == null)
+                    continue;
+
+                layersToDelete.Add(AssetDatabase.GetAssetPath(layer.GetInstanceID()));
+            }
+
+            // remove all links to layers
+            TargetTerrain.terrainData.terrainLayers = null;
+
+            // delete each layer
+            foreach(var layerFile in layersToDelete)
+            {
+                if (string.IsNullOrEmpty(layerFile))
+                    continue;
+
+                AssetDatabase.DeleteAsset(layerFile);
+            }
+
+            Undo.FlushUndoRecordObjects();
+        }
+
+        string scenePath = System.IO.Path.GetDirectoryName(SceneManager.GetActiveScene().path);
+
+        // iterate over the biomes
+        List<TerrainLayer> newLayers = new List<TerrainLayer>();
+        foreach(var biomeMetadata in Config.Biomes)
+        {
+            var biome = biomeMetadata.Biome;
+
+            // iterate over the textures
+            foreach(var biomeTexture in biome.Textures)
+            {
+                // create the layer
+                TerrainLayer textureLayer = new TerrainLayer();
+                textureLayer.diffuseTexture = biomeTexture.Diffuse;
+                textureLayer.normalMapTexture = biomeTexture.NormalMap;
+
+                // save as asset
+                string layerPath = System.IO.Path.Combine(scenePath, "Layer_" + biome.Name + "_" + biomeTexture.UniqueID);
+                AssetDatabase.CreateAsset(textureLayer, layerPath);
+
+                // add to the layer map
+                BiomeTextureToTerrainLayerIndex[biomeTexture.UniqueID] = newLayers.Count;
+                newLayers.Add(textureLayer);
+            }
+        }
+
+        Undo.RecordObject(TargetTerrain.terrainData, "Updating terrain layers");
+        TargetTerrain.terrainData.terrainLayers = newLayers.ToArray();
     }
 
     void Perform_BiomeGeneration_LowResolution(int mapResolution)
@@ -277,7 +378,7 @@ public class ProcGenManager : MonoBehaviour
             var biome = Config.Biomes[biomeIndex].Biome;
             if (biome.HeightModifier == null)
                 continue;
-                
+
             BaseHeightMapModifier[] modifiers = biome.HeightModifier.GetComponents<BaseHeightMapModifier>();
 
             foreach(var modifier in modifiers)
@@ -298,6 +399,68 @@ public class ProcGenManager : MonoBehaviour
         }     
 
         TargetTerrain.terrainData.SetHeights(0, 0, heightMap);
+    }
+
+    public int GetLayerForTexture(string uniqueID)
+    {
+        return BiomeTextureToTerrainLayerIndex[uniqueID];
+    }
+
+    void Perform_TerrainPainting(int mapResolution, int alphaMapResolution)
+    {
+        float[,] heightMap = TargetTerrain.terrainData.GetHeights(0, 0, mapResolution, mapResolution);
+        float[,,] alphaMaps = TargetTerrain.terrainData.GetAlphamaps(0, 0, alphaMapResolution, alphaMapResolution);
+
+        float[,] slopeMap = new float[alphaMapResolution, alphaMapResolution];
+
+        // generate the slope map
+        for (int y = 0; y < alphaMapResolution; ++y)
+        {
+            for (int x = 0; x < alphaMapResolution; ++x)
+            {
+                slopeMap[x, y] = TargetTerrain.terrainData.GetInterpolatedNormal((float) x / alphaMapResolution, (float) y / alphaMapResolution).y;
+            }
+        }  
+
+        // zero out all layers
+        for (int y = 0; y < alphaMapResolution; ++y)
+        {
+            for (int x = 0; x < alphaMapResolution; ++x)
+            {
+                for (int layerIndex = 0; layerIndex < TargetTerrain.terrainData.alphamapLayers; ++layerIndex)
+                {
+                    alphaMaps[x, y, layerIndex] = 0;
+                }
+            }
+        }   
+
+        // run terrain painting for each biome
+        for (int biomeIndex = 0; biomeIndex < Config.NumBiomes; ++biomeIndex)
+        {
+            var biome = Config.Biomes[biomeIndex].Biome;
+            if (biome.TerrainPainter == null)
+                continue;
+
+            BaseTexturePainter[] modifiers = biome.TerrainPainter.GetComponents<BaseTexturePainter>();
+
+            foreach(var modifier in modifiers)
+            {
+                modifier.Execute(this, mapResolution, heightMap, TargetTerrain.terrainData.heightmapScale, slopeMap, alphaMaps, alphaMapResolution, BiomeMap, biomeIndex, biome);
+            }
+        }        
+
+        // run texture post processing
+        if (Config.PaintingPostProcessingModifier != null)
+        {
+            BaseTexturePainter[] modifiers = Config.PaintingPostProcessingModifier.GetComponents<BaseTexturePainter>();
+
+            foreach(var modifier in modifiers)
+            {
+                modifier.Execute(this, mapResolution, heightMap, TargetTerrain.terrainData.heightmapScale, slopeMap, alphaMaps, alphaMapResolution);
+            }    
+        }
+
+        TargetTerrain.terrainData.SetAlphamaps(0, 0, alphaMaps);
     }
 #endif // UNITY_EDITOR
 }

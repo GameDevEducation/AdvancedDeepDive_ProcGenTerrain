@@ -20,7 +20,7 @@ public class HeightMapModifier_SetValue : BaseHeightMapModifier
                 float newHeight = TargetHeight / heightmapScale.y;
 
                 // blend based on strength
-                heightMap[x, y] = Mathf.Lerp(heightMap[x, y], newHeight, Strength);;
+                heightMap[x, y] = Mathf.Lerp(heightMap[x, y], newHeight, Strength);
             }
         }
     }

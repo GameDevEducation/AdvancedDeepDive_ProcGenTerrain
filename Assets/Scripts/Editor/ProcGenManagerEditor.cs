@@ -10,6 +10,12 @@ public class ProcGenManagerEditor : Editor
     {
         DrawDefaultInspector();
 
+        if (GUILayout.Button("Regenerate Textures"))
+        {
+            ProcGenManager targetManager = serializedObject.targetObject as ProcGenManager;
+            targetManager.RegenerateTextures();
+        }
+
         if (GUILayout.Button("Regenerate World"))
         {
             ProcGenManager targetManager = serializedObject.targetObject as ProcGenManager;

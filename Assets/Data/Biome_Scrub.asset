@@ -18,3 +18,8 @@ MonoBehaviour:
   MinDecayRate: 0.1
   MaxDecayRate: 0.2
   HeightModifier: {fileID: 4316101915917840975, guid: 8fb8a3f055c3c0941b65b4b960cb0107, type: 3}
+  TerrainPainter: {fileID: 6126891364327839091, guid: 9508f614005d7ad4080d70a0c90ccac6, type: 3}
+  Textures:
+  - UniqueID: Scrub-Sand
+    Diffuse: {fileID: 2800000, guid: 350a49d29a0f7b94faf91f61ef7ee19f, type: 3}
+    NormalMap: {fileID: 0}
