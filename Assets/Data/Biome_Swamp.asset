@@ -17,3 +17,4 @@ MonoBehaviour:
   MaxIntensity: 1
   MinDecayRate: 0.1
   MaxDecayRate: 0.2
+  HeightModifier: {fileID: 4316101915917840975, guid: 501ecc3bfd5f99e4d9f97782adf5933e, type: 3}

@@ -8,6 +8,9 @@ public class ProcGenManager : MonoBehaviour
     [SerializeField] Terrain TargetTerrain;
 
 #if UNITY_EDITOR
+    byte[,] BiomeMap_LowResolution;
+    float[,] BiomeStrengths_LowResolution;
+
     byte[,] BiomeMap;
     float[,] BiomeStrengths;
 #endif // UNITY_EDITOR
@@ -30,14 +33,21 @@ public class ProcGenManager : MonoBehaviour
         // cache the map resolution
         int mapResolution = TargetTerrain.terrainData.heightmapResolution;
 
-        Perform_BiomeGeneration(mapResolution);
+        // generate the low resolution biome map
+        Perform_BiomeGeneration_LowResolution((int)Config.BiomeMapResolution);
+
+        // generate the high resolution biome map
+        Perform_BiomeGeneration_HighResolution((int)Config.BiomeMapResolution, mapResolution);
+
+        // update the terrain heights
+        Perform_HeightMapModification(mapResolution);
     }
 
-    void Perform_BiomeGeneration(int mapResolution)
+    void Perform_BiomeGeneration_LowResolution(int mapResolution)
     {
         // allocate the biome map and strength map
-        BiomeMap = new byte[mapResolution, mapResolution];
-        BiomeStrengths = new float[mapResolution, mapResolution];
+        BiomeMap_LowResolution = new byte[mapResolution, mapResolution];
+        BiomeStrengths_LowResolution = new float[mapResolution, mapResolution];
 
         // setup space for the seed points
         int numSeedPoints = Mathf.FloorToInt(mapResolution * mapResolution * Config.BiomeSeedPointDensity);
@@ -48,7 +58,7 @@ public class ProcGenManager : MonoBehaviour
         for (int biomeIndex = 0; biomeIndex < Config.NumBiomes; ++biomeIndex)
         {
             int numEntries = Mathf.RoundToInt(numSeedPoints * Config.Biomes[biomeIndex].Weighting / totalBiomeWeighting);
-            Debug.Log("Will spawn " + numEntries + " seedpoints for " + Config.Biomes[biomeIndex].Biome.Name);
+            //Debug.Log("Will spawn " + numEntries + " seedpoints for " + Config.Biomes[biomeIndex].Biome.Name);
 
             for (int entryIndex = 0; entryIndex < numEntries; ++entryIndex)
             {
@@ -71,19 +81,20 @@ public class ProcGenManager : MonoBehaviour
             Perform_SpawnIndividualBiome(biomeIndex, mapResolution);
         }
 
+        // save out the biome map
         Texture2D biomeMap = new Texture2D(mapResolution, mapResolution, TextureFormat.RGB24, false);
         for (int y = 0; y < mapResolution; ++y)
         {
             for (int x = 0; x < mapResolution; ++x)
             {
-                float hue = ((float)BiomeMap[x, y] / (float)Config.NumBiomes);
+                float hue = ((float)BiomeMap_LowResolution[x, y] / (float)Config.NumBiomes);
 
                 biomeMap.SetPixel(x, y, Color.HSVToRGB(hue, 0.75f, 0.75f));
             }
         }
         biomeMap.Apply();
 
-        System.IO.File.WriteAllBytes("BiomeMap.png", biomeMap.EncodeToPNG());
+        System.IO.File.WriteAllBytes("BiomeMap_LowResolution.png", biomeMap.EncodeToPNG());
     }
 
     Vector2Int[] NeighbourOffsets = new Vector2Int[] {
@@ -128,9 +139,9 @@ public class ProcGenManager : MonoBehaviour
             Vector2Int workingLocation = workingList.Dequeue();
 
             // set the biome
-            BiomeMap[workingLocation.x, workingLocation.y] = biomeIndex;
+            BiomeMap_LowResolution[workingLocation.x, workingLocation.y] = biomeIndex;
             visited[workingLocation.x, workingLocation.y] = true;
-            BiomeStrengths[workingLocation.x, workingLocation.y] = targetIntensity[workingLocation.x, workingLocation.y];
+            BiomeStrengths_LowResolution[workingLocation.x, workingLocation.y] = targetIntensity[workingLocation.x, workingLocation.y];
 
             // traverse the neighbours
             for (int neighbourIndex = 0; neighbourIndex < NeighbourOffsets.Length; ++neighbourIndex)
@@ -162,6 +173,131 @@ public class ProcGenManager : MonoBehaviour
                 workingList.Enqueue(neighbourLocation);
             }
         }
+    }
+
+    byte CalculateHighResBiomeIndex(int lowResMapSize, int lowResX, int lowResY, float fractionX, float fractionY)
+    {
+        float A = BiomeMap_LowResolution[lowResX,     lowResY];
+        float B = (lowResX + 1) < lowResMapSize ? BiomeMap_LowResolution[lowResX + 1, lowResY] : A;
+        float C = (lowResY + 1) < lowResMapSize ? BiomeMap_LowResolution[lowResX,     lowResY + 1] : A;
+        float D = 0;
+
+        if ((lowResX + 1) >= lowResMapSize)
+            D = C;
+        else if ((lowResY + 1) >= lowResMapSize)
+            D = B;
+        else
+            D = BiomeMap_LowResolution[lowResX + 1, lowResY + 1];
+
+        // perform bilinear filtering
+        float filteredIndex = A * (1 - fractionX) * (1 - fractionY) + B * fractionX * (1 - fractionY) *
+                              C * fractionY * (1 - fractionX) + D * fractionX * fractionY;
+
+        // build an array of the possible biomes based on the values used to interpolate
+        float[] candidateBiomes = new float[] {A, B, C, D};
+
+        // find the neighbouring biome closest to the interpolated biome
+        float bestBiome = -1f;
+        float bestDelta = float.MaxValue;
+        for (int biomeIndex = 0; biomeIndex < candidateBiomes.Length; ++biomeIndex)
+        {
+            float delta = Mathf.Abs(filteredIndex - candidateBiomes[biomeIndex]);
+
+            if (delta < bestDelta)
+            {
+                bestDelta = delta;
+                bestBiome = candidateBiomes[biomeIndex];
+            }
+        }
+
+        return (byte)Mathf.RoundToInt(bestBiome);
+    }
+
+    void Perform_BiomeGeneration_HighResolution(int lowResMapSize, int highResMapSize)
+    {
+        // allocate the biome map and strength map
+        BiomeMap = new byte[highResMapSize, highResMapSize];
+        BiomeStrengths = new float[highResMapSize, highResMapSize];
+
+        // calculate map scale
+        float mapScale = (float)lowResMapSize / (float)highResMapSize;
+
+        // calculate the high res map
+        for (int y = 0; y < highResMapSize; ++y)
+        {
+            int lowResY = Mathf.FloorToInt(y * mapScale);
+            float yFraction = y * mapScale - lowResY;
+
+            for(int x = 0; x < highResMapSize; ++x)
+            {
+                int lowResX = Mathf.FloorToInt(x * mapScale);
+                float xFraction = x * mapScale - lowResX;
+
+                BiomeMap[x, y] = CalculateHighResBiomeIndex(lowResMapSize, lowResX, lowResY, xFraction, yFraction);
+
+                // this would do no interpolation - ie. point based
+                //BiomeMap[x, y] = BiomeMap_LowResolution[lowResX, lowResY];
+            }
+        }
+
+        // save out the biome map
+        Texture2D biomeMap = new Texture2D(highResMapSize, highResMapSize, TextureFormat.RGB24, false);
+        for (int y = 0; y < highResMapSize; ++y)
+        {
+            for (int x = 0; x < highResMapSize; ++x)
+            {
+                float hue = ((float)BiomeMap[x, y] / (float)Config.NumBiomes);
+
+                biomeMap.SetPixel(x, y, Color.HSVToRGB(hue, 0.75f, 0.75f));
+            }
+        }
+        biomeMap.Apply();
+
+        System.IO.File.WriteAllBytes("BiomeMap_HighResolution.png", biomeMap.EncodeToPNG());        
+    }
+
+    void Perform_HeightMapModification(int mapResolution)
+    {
+        float[,] heightMap = TargetTerrain.terrainData.GetHeights(0, 0, mapResolution, mapResolution);
+
+        // execute any initial height modifiers
+        if (Config.InitialHeightModifier != null)
+        {
+            BaseHeightMapModifier[] modifiers = Config.InitialHeightModifier.GetComponents<BaseHeightMapModifier>();
+
+            foreach(var modifier in modifiers)
+            {
+                modifier.Execute(mapResolution, heightMap, TargetTerrain.terrainData.heightmapScale);
+            }
+        }
+
+        // run heightmap generation for each biome
+        for (int biomeIndex = 0; biomeIndex < Config.NumBiomes; ++biomeIndex)
+        {
+            var biome = Config.Biomes[biomeIndex].Biome;
+            if (biome.HeightModifier == null)
+                continue;
+                
+            BaseHeightMapModifier[] modifiers = biome.HeightModifier.GetComponents<BaseHeightMapModifier>();
+
+            foreach(var modifier in modifiers)
+            {
+                modifier.Execute(mapResolution, heightMap, TargetTerrain.terrainData.heightmapScale, BiomeMap, biomeIndex, biome);
+            }
+        }
+
+        // execute any post processing height modifiers
+        if (Config.HeightPostProcessingModifier != null)
+        {
+            BaseHeightMapModifier[] modifiers = Config.HeightPostProcessingModifier.GetComponents<BaseHeightMapModifier>();
+        
+            foreach(var modifier in modifiers)
+            {
+                modifier.Execute(mapResolution, heightMap, TargetTerrain.terrainData.heightmapScale);
+            }
+        }     
+
+        TargetTerrain.terrainData.SetHeights(0, 0, heightMap);
     }
 #endif // UNITY_EDITOR
 }
