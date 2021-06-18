@@ -23,6 +23,7 @@ public class BiomeConfigSO : ScriptableObject
 
     public GameObject HeightModifier;
     public GameObject TerrainPainter;
+    public GameObject ObjectPlacer;
 
     public List<BiomeTexture> Textures;
 }

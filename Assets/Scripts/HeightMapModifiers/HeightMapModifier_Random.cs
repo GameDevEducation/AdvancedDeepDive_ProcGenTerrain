@@ -20,7 +20,7 @@ public class HeightMapModifier_Random : BaseHeightMapModifier
                 float newHeight = heightMap[x, y] + (Random.Range(-HeightDelta, HeightDelta) / heightmapScale.y);
 
                 // blend based on strength
-                heightMap[x, y] = Mathf.Lerp(heightMap[x, y], newHeight, Strength);;
+                heightMap[x, y] = Mathf.Lerp(heightMap[x, y], newHeight, Strength);
             }
         }
     }        

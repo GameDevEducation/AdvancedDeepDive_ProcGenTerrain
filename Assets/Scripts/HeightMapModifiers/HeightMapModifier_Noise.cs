@@ -35,7 +35,7 @@ public class HeightMapModifier_Noise : BaseHeightMapModifier
                     float newHeight = heightMap[x, y] + (noiseValue * WorkingHeightDelta / heightmapScale.y);
 
                     // blend based on strength
-                    heightMap[x, y] = Mathf.Lerp(heightMap[x, y], newHeight, Strength);;
+                    heightMap[x, y] = Mathf.Lerp(heightMap[x, y], newHeight, Strength);
                 }
             }
 

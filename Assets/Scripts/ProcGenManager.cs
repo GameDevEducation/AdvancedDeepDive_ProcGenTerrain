@@ -20,6 +20,8 @@ public class ProcGenManager : MonoBehaviour
 
     byte[,] BiomeMap;
     float[,] BiomeStrengths;
+
+    float[,] SlopeMap;
 #endif // UNITY_EDITOR
 
     // Start is called before the first frame update
@@ -56,10 +58,13 @@ public class ProcGenManager : MonoBehaviour
         Perform_BiomeGeneration_HighResolution((int)Config.BiomeMapResolution, mapResolution);
 
         // update the terrain heights
-        Perform_HeightMapModification(mapResolution);
+        Perform_HeightMapModification(mapResolution, alphaMapResolution);
 
         // paint the terrain
         Perform_TerrainPainting(mapResolution, alphaMapResolution);
+
+        // place the objects
+        Perform_ObjectPlacement(mapResolution, alphaMapResolution);
     }
 
     void Perform_GenerateTextureMapping()
@@ -357,7 +362,7 @@ public class ProcGenManager : MonoBehaviour
         System.IO.File.WriteAllBytes("BiomeMap_HighResolution.png", biomeMap.EncodeToPNG());        
     }
 
-    void Perform_HeightMapModification(int mapResolution)
+    void Perform_HeightMapModification(int mapResolution, int alphaMapResolution)
     {
         float[,] heightMap = TargetTerrain.terrainData.GetHeights(0, 0, mapResolution, mapResolution);
 
@@ -399,6 +404,16 @@ public class ProcGenManager : MonoBehaviour
         }     
 
         TargetTerrain.terrainData.SetHeights(0, 0, heightMap);
+
+        // generate the slope map
+        SlopeMap = new float[alphaMapResolution, alphaMapResolution];
+        for (int y = 0; y < alphaMapResolution; ++y)
+        {
+            for (int x = 0; x < alphaMapResolution; ++x)
+            {
+                SlopeMap[x, y] = TargetTerrain.terrainData.GetInterpolatedNormal((float) x / alphaMapResolution, (float) y / alphaMapResolution).y;
+            }
+        }          
     }
 
     public int GetLayerForTexture(string uniqueID)
@@ -410,17 +425,6 @@ public class ProcGenManager : MonoBehaviour
     {
         float[,] heightMap = TargetTerrain.terrainData.GetHeights(0, 0, mapResolution, mapResolution);
         float[,,] alphaMaps = TargetTerrain.terrainData.GetAlphamaps(0, 0, alphaMapResolution, alphaMapResolution);
-
-        float[,] slopeMap = new float[alphaMapResolution, alphaMapResolution];
-
-        // generate the slope map
-        for (int y = 0; y < alphaMapResolution; ++y)
-        {
-            for (int x = 0; x < alphaMapResolution; ++x)
-            {
-                slopeMap[x, y] = TargetTerrain.terrainData.GetInterpolatedNormal((float) x / alphaMapResolution, (float) y / alphaMapResolution).y;
-            }
-        }  
 
         // zero out all layers
         for (int y = 0; y < alphaMapResolution; ++y)
@@ -445,7 +449,7 @@ public class ProcGenManager : MonoBehaviour
 
             foreach(var modifier in modifiers)
             {
-                modifier.Execute(this, mapResolution, heightMap, TargetTerrain.terrainData.heightmapScale, slopeMap, alphaMaps, alphaMapResolution, BiomeMap, biomeIndex, biome);
+                modifier.Execute(this, mapResolution, heightMap, TargetTerrain.terrainData.heightmapScale, SlopeMap, alphaMaps, alphaMapResolution, BiomeMap, biomeIndex, biome);
             }
         }        
 
@@ -456,11 +460,38 @@ public class ProcGenManager : MonoBehaviour
 
             foreach(var modifier in modifiers)
             {
-                modifier.Execute(this, mapResolution, heightMap, TargetTerrain.terrainData.heightmapScale, slopeMap, alphaMaps, alphaMapResolution);
+                modifier.Execute(this, mapResolution, heightMap, TargetTerrain.terrainData.heightmapScale, SlopeMap, alphaMaps, alphaMapResolution);
             }    
         }
 
         TargetTerrain.terrainData.SetAlphamaps(0, 0, alphaMaps);
+    }
+
+    void Perform_ObjectPlacement(int mapResolution, int alphaMapResolution)
+    {
+        // clear out any previously spawned objects
+        for (int childIndex = transform.childCount - 1; childIndex >= 0; --childIndex)
+        {
+            Undo.DestroyObjectImmediate(transform.GetChild(childIndex).gameObject);
+        }
+
+        float[,] heightMap = TargetTerrain.terrainData.GetHeights(0, 0, mapResolution, mapResolution);
+        float[,,] alphaMaps = TargetTerrain.terrainData.GetAlphamaps(0, 0, alphaMapResolution, alphaMapResolution);
+
+        // run object placement for each biome
+        for (int biomeIndex = 0; biomeIndex < Config.NumBiomes; ++biomeIndex)
+        {
+            var biome = Config.Biomes[biomeIndex].Biome;
+            if (biome.ObjectPlacer == null)
+                continue;
+
+            BaseObjectPlacer[] modifiers = biome.ObjectPlacer.GetComponents<BaseObjectPlacer>();
+
+            foreach(var modifier in modifiers)
+            {
+                modifier.Execute(transform, mapResolution, heightMap, TargetTerrain.terrainData.heightmapScale, SlopeMap, alphaMaps, alphaMapResolution, BiomeMap, biomeIndex, biome);
+            }
+        }        
     }
 #endif // UNITY_EDITOR
 }

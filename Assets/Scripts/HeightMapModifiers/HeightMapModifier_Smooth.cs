@@ -51,7 +51,7 @@ public class HeightMapModifier_Smooth : BaseHeightMapModifier
             for (int x = 0; x < mapResolution; ++x)
             {
                 // blend based on strength
-                heightMap[x, y] = Mathf.Lerp(heightMap[x, y], smoothedHeights[x, y], Strength);;
+                heightMap[x, y] = Mathf.Lerp(heightMap[x, y], smoothedHeights[x, y], Strength);
             }
         }        
     }
