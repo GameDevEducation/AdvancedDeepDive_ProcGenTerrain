@@ -1,6 +1,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using System.Linq;
 
 #if UNITY_EDITOR
 using UnityEditor;
@@ -12,7 +13,7 @@ public class ProcGenManager : MonoBehaviour
     [SerializeField] ProcGenConfigSO Config;
     [SerializeField] Terrain TargetTerrain;
 
-    Dictionary<string, int> BiomeTextureToTerrainLayerIndex = new Dictionary<string, int>();
+    Dictionary<TextureConfig, int> BiomeTextureToTerrainLayerIndex = new Dictionary<TextureConfig, int>();
 
 #if UNITY_EDITOR
     byte[,] BiomeMap_LowResolution;
@@ -71,19 +72,42 @@ public class ProcGenManager : MonoBehaviour
     {
         BiomeTextureToTerrainLayerIndex.Clear();
 
-        // iterate over the biomes
-        int layerIndex = 0;
+        // build up list of all textures
+        List<TextureConfig> allTextures = new List<TextureConfig>();
         foreach(var biomeMetadata in Config.Biomes)
         {
-            var biome = biomeMetadata.Biome;
+            List<TextureConfig> biomeTextures = biomeMetadata.Biome.RetrieveTextures();
 
-            // iterate over the textures
-            foreach(var biomeTexture in biome.Textures)
+            if (biomeTextures == null || biomeTextures.Count == 0)
+                continue;
+
+            allTextures.AddRange(biomeTextures);
+        }
+
+        if (Config.PaintingPostProcessingModifier != null)
+        {
+            // extract all textures from every painter
+            BaseTexturePainter[] allPainters = Config.PaintingPostProcessingModifier.GetComponents<BaseTexturePainter>();
+            foreach(var painter in allPainters)
             {
-                // add to the layer map
-                BiomeTextureToTerrainLayerIndex[biomeTexture.UniqueID] = layerIndex;
-                ++layerIndex;
-            }
+                var painterTextures = painter.RetrieveTextures();
+
+                if (painterTextures == null || painterTextures.Count == 0)
+                    continue;
+
+                allTextures.AddRange(painterTextures);
+            }            
+        }
+
+        // filter out any duplicate entries
+        allTextures = allTextures.Distinct().ToList();
+
+        // iterate over the texture configs
+        int layerIndex = 0;
+        foreach(var textureConfig in allTextures)
+        {
+            BiomeTextureToTerrainLayerIndex[textureConfig] = layerIndex;
+            ++layerIndex;
         }
     }
 
@@ -121,28 +145,32 @@ public class ProcGenManager : MonoBehaviour
 
         string scenePath = System.IO.Path.GetDirectoryName(SceneManager.GetActiveScene().path);
 
-        // iterate over the biomes
-        List<TerrainLayer> newLayers = new List<TerrainLayer>();
-        foreach(var biomeMetadata in Config.Biomes)
+        Perform_GenerateTextureMapping();
+
+        // generate all of the layers
+        int numLayers = BiomeTextureToTerrainLayerIndex.Count;
+        List<TerrainLayer> newLayers = new List<TerrainLayer>(numLayers);
+        
+        // preallocate the layers
+        for (int layerIndex = 0; layerIndex < numLayers; ++layerIndex)
         {
-            var biome = biomeMetadata.Biome;
+            newLayers.Add(new TerrainLayer());
+        }
 
-            // iterate over the textures
-            foreach(var biomeTexture in biome.Textures)
-            {
-                // create the layer
-                TerrainLayer textureLayer = new TerrainLayer();
-                textureLayer.diffuseTexture = biomeTexture.Diffuse;
-                textureLayer.normalMapTexture = biomeTexture.NormalMap;
+        // iterate over the texture map
+        foreach(var textureMappingEntry in BiomeTextureToTerrainLayerIndex)
+        {
+            var textureConfig = textureMappingEntry.Key;
+            var textureLayerIndex = textureMappingEntry.Value;
+            var textureLayer = newLayers[textureLayerIndex];
 
-                // save as asset
-                string layerPath = System.IO.Path.Combine(scenePath, "Layer_" + biome.Name + "_" + biomeTexture.UniqueID);
-                AssetDatabase.CreateAsset(textureLayer, layerPath);
+            // configure the terrain layer textures
+            textureLayer.diffuseTexture = textureConfig.Diffuse;
+            textureLayer.normalMapTexture = textureConfig.NormalMap;
 
-                // add to the layer map
-                BiomeTextureToTerrainLayerIndex[biomeTexture.UniqueID] = newLayers.Count;
-                newLayers.Add(textureLayer);
-            }
+            // save as asset
+            string layerPath = System.IO.Path.Combine(scenePath, "Layer_" + textureLayerIndex);
+            AssetDatabase.CreateAsset(textureLayer, layerPath);
         }
 
         Undo.RecordObject(TargetTerrain.terrainData, "Updating terrain layers");
@@ -164,7 +192,6 @@ public class ProcGenManager : MonoBehaviour
         for (int biomeIndex = 0; biomeIndex < Config.NumBiomes; ++biomeIndex)
         {
             int numEntries = Mathf.RoundToInt(numSeedPoints * Config.Biomes[biomeIndex].Weighting / totalBiomeWeighting);
-            //Debug.Log("Will spawn " + numEntries + " seedpoints for " + Config.Biomes[biomeIndex].Biome.Name);
 
             for (int entryIndex = 0; entryIndex < numEntries; ++entryIndex)
             {
@@ -416,9 +443,9 @@ public class ProcGenManager : MonoBehaviour
         }          
     }
 
-    public int GetLayerForTexture(string uniqueID)
+    public int GetLayerForTexture(TextureConfig textureConfig)
     {
-        return BiomeTextureToTerrainLayerIndex[uniqueID];
+        return BiomeTextureToTerrainLayerIndex[textureConfig];
     }
 
     void Perform_TerrainPainting(int mapResolution, int alphaMapResolution)

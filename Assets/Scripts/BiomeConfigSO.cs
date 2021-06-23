@@ -2,14 +2,6 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-[System.Serializable]
-public class BiomeTexture
-{
-    public string UniqueID;
-    public Texture2D Diffuse;
-    public Texture2D NormalMap;
-}
-
 [CreateAssetMenu(fileName = "Biome Config", menuName = "Procedural Generation/Biome Configuration", order = -1)]
 public class BiomeConfigSO : ScriptableObject
 {
@@ -25,5 +17,24 @@ public class BiomeConfigSO : ScriptableObject
     public GameObject TerrainPainter;
     public GameObject ObjectPlacer;
 
-    public List<BiomeTexture> Textures;
+    public List<TextureConfig> RetrieveTextures()
+    {
+        if (TerrainPainter == null)
+            return null;
+
+        // extract all textures from every painter
+        List<TextureConfig> allTextures = new List<TextureConfig>();
+        BaseTexturePainter[] allPainters = TerrainPainter.GetComponents<BaseTexturePainter>();
+        foreach(var painter in allPainters)
+        {
+            var painterTextures = painter.RetrieveTextures();
+
+            if (painterTextures == null || painterTextures.Count == 0)
+                continue;
+
+            allTextures.AddRange(painterTextures);
+        }
+
+        return allTextures;
+    }
 }

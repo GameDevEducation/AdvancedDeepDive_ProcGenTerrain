@@ -4,7 +4,7 @@ using UnityEngine;
 
 public class TexturePainter_Random : BaseTexturePainter
 {
-    [SerializeField] List<string> TextureIDs;
+    [SerializeField] List<TextureConfig> Textures;
 
     public override void Execute(ProcGenManager manager, int mapResolution, float[,] heightMap, Vector3 heightmapScale, float[,] slopeMap, float[,,] alphaMaps, int alphaMapResolution, byte[,] biomeMap = null, int biomeIndex = -1, BiomeConfigSO biome = null)
     {
@@ -20,10 +20,15 @@ public class TexturePainter_Random : BaseTexturePainter
                 if (biomeIndex >= 0 && biomeMap[heightMapX, heightMapY] != biomeIndex)
                     continue;
 
-                string randomTexture = TextureIDs[Random.Range(0, TextureIDs.Count)];
+                var randomTexture = Textures[Random.Range(0, Textures.Count)];
 
                 alphaMaps[x, y, manager.GetLayerForTexture(randomTexture)] = Strength;
             }
         }        
     }
+
+    public override List<TextureConfig> RetrieveTextures()
+    {
+        return Textures;
+    }       
 }

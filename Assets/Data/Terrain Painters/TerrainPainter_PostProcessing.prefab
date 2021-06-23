@@ -9,6 +9,8 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 3484055860925413486}
+  - component: {fileID: -4933575608216922637}
+  - component: {fileID: -707153334450884906}
   - component: {fileID: 6602234997349929540}
   m_Layer: 0
   m_Name: TerrainPainter_PostProcessing
@@ -31,6 +33,122 @@ Transform:
   m_Father: {fileID: 0}
   m_RootOrder: 0
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &-4933575608216922637
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4273326731991161223}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: daf6d94ea71143441becb8fa3b44fe4f, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  Strength: 1
+  Texture:
+    Diffuse: {fileID: 2800000, guid: bf965539b2966c848bc74c5d9a2d18f1, type: 3}
+    NormalMap: {fileID: 0}
+  StartHeight: 30
+  EndHeight: 60
+  Intensity:
+    serializedVersion: 2
+    m_Curve:
+    - serializedVersion: 3
+      time: 0
+      value: 0
+      inSlope: 2
+      outSlope: 2
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0
+      outWeight: 0
+    - serializedVersion: 3
+      time: 1
+      value: 1
+      inSlope: 0
+      outSlope: 0
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0
+      outWeight: 0
+    m_PreInfinity: 2
+    m_PostInfinity: 2
+    m_RotationOrder: 4
+  SuppressOtherTextures: 0
+  SuppressionIntensity:
+    serializedVersion: 2
+    m_Curve: []
+    m_PreInfinity: 2
+    m_PostInfinity: 2
+    m_RotationOrder: 4
+--- !u!114 &-707153334450884906
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4273326731991161223}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: daf6d94ea71143441becb8fa3b44fe4f, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  Strength: 1
+  Texture:
+    Diffuse: {fileID: 2800000, guid: e20da56a326440940a6b99509ab2108b, type: 3}
+    NormalMap: {fileID: 0}
+  StartHeight: 0
+  EndHeight: 15
+  Intensity:
+    serializedVersion: 2
+    m_Curve:
+    - serializedVersion: 3
+      time: 0
+      value: 1
+      inSlope: 0.023628749
+      outSlope: 0.023628749
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0
+      outWeight: 0.09980712
+    - serializedVersion: 3
+      time: 1
+      value: 0
+      inSlope: -3.151043
+      outSlope: -3.151043
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0.05581397
+      outWeight: 0
+    m_PreInfinity: 2
+    m_PostInfinity: 2
+    m_RotationOrder: 4
+  SuppressOtherTextures: 1
+  SuppressionIntensity:
+    serializedVersion: 2
+    m_Curve:
+    - serializedVersion: 3
+      time: 0
+      value: 0
+      inSlope: 0
+      outSlope: 0
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0
+      outWeight: 0
+    - serializedVersion: 3
+      time: 1
+      value: 1
+      inSlope: 2
+      outSlope: 2
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0
+      outWeight: 0
+    m_PreInfinity: 2
+    m_PostInfinity: 2
+    m_RotationOrder: 4
 --- !u!114 &6602234997349929540
 MonoBehaviour:
   m_ObjectHideFlags: 0

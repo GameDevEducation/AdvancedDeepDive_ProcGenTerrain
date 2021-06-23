@@ -4,12 +4,12 @@ using UnityEngine;
 
 public class TexturePainter_Slope : BaseTexturePainter
 {
-    [SerializeField] string TextureID;
+    [SerializeField] TextureConfig Texture;
     [SerializeField] AnimationCurve IntensityVsSlope;
 
     public override void Execute(ProcGenManager manager, int mapResolution, float[,] heightMap, Vector3 heightmapScale, float[,] slopeMap, float[,,] alphaMaps, int alphaMapResolution, byte[,] biomeMap = null, int biomeIndex = -1, BiomeConfigSO biome = null)
     {
-        int textureLayer = manager.GetLayerForTexture(TextureID);
+        int textureLayer = manager.GetLayerForTexture(Texture);
 
         for (int y = 0; y < alphaMapResolution; ++y)
         {
@@ -27,4 +27,12 @@ public class TexturePainter_Slope : BaseTexturePainter
             }
         }        
     }
+
+    public override List<TextureConfig> RetrieveTextures()
+    {
+        List<TextureConfig> allTextures = new List<TextureConfig>(1);
+        allTextures.Add(Texture);
+
+        return allTextures;
+    }    
 }

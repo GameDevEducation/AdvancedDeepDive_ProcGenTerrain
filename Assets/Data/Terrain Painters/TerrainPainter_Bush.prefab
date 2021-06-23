@@ -44,5 +44,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   Strength: 1
-  TextureIDs:
-  - Bush-Mud
+  Textures:
+  - Diffuse: {fileID: 2800000, guid: de887a8a677123343b1ff6e6ad831d42, type: 3}
+    NormalMap: {fileID: 0}
+  - Diffuse: {fileID: 2800000, guid: f3bf1330db471cc4b953400d074a9668, type: 3}
+    NormalMap: {fileID: 0}

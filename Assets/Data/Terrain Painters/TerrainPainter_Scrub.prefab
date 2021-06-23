@@ -44,5 +44,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   Strength: 1
-  TextureIDs:
-  - Scrub-Sand
+  Textures:
+  - Diffuse: {fileID: 2800000, guid: de887a8a677123343b1ff6e6ad831d42, type: 3}
+    NormalMap: {fileID: 0}
+  - Diffuse: {fileID: 2800000, guid: 350a49d29a0f7b94faf91f61ef7ee19f, type: 3}
+    NormalMap: {fileID: 0}
