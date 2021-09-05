@@ -49,6 +49,12 @@ public class ProcGenManager : MonoBehaviour
         int mapResolution = TargetTerrain.terrainData.heightmapResolution;
         int alphaMapResolution = TargetTerrain.terrainData.alphamapResolution;
 
+        // clear out any previously spawned objects
+        for (int childIndex = transform.childCount - 1; childIndex >= 0; --childIndex)
+        {
+            Undo.DestroyObjectImmediate(transform.GetChild(childIndex).gameObject);
+        }
+
         // Generate the texture mapping
         Perform_GenerateTextureMapping();
 
@@ -496,12 +502,6 @@ public class ProcGenManager : MonoBehaviour
 
     void Perform_ObjectPlacement(int mapResolution, int alphaMapResolution)
     {
-        // clear out any previously spawned objects
-        for (int childIndex = transform.childCount - 1; childIndex >= 0; --childIndex)
-        {
-            Undo.DestroyObjectImmediate(transform.GetChild(childIndex).gameObject);
-        }
-
         float[,] heightMap = TargetTerrain.terrainData.GetHeights(0, 0, mapResolution, mapResolution);
         float[,,] alphaMaps = TargetTerrain.terrainData.GetAlphamaps(0, 0, alphaMapResolution, alphaMapResolution);
 

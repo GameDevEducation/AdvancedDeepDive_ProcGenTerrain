@@ -9,8 +9,10 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 5229378853134418343}
+  - component: {fileID: 1528474473648193899}
   - component: {fileID: 7385087341438574043}
   - component: {fileID: 621538915513122900}
+  - component: {fileID: 4847814105293782065}
   m_Layer: 0
   m_Name: HeightModifier_PostProcessing
   m_TagString: Untagged
@@ -32,6 +34,24 @@ Transform:
   m_Father: {fileID: 0}
   m_RootOrder: 0
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &1528474473648193899
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2641592558679900223}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: dc0c76b9cab0c474abba515ae8507768, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  Strength: 1
+  Features:
+  - HeightMap: {fileID: 2800000, guid: bc5bd6a57e12e4243ab1a17b7f7f9972, type: 3}
+    Height: 100
+    Radius: 50
+    NumToSpawn: 5
 --- !u!114 &7385087341438574043
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -60,3 +80,21 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   Strength: 1
   HeightDelta: 0.1
+--- !u!114 &4847814105293782065
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2641592558679900223}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 7dcf52d1fb2a4fc45a4f504742614291, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  Strength: 1
+  Buildings:
+  - HeightMap: {fileID: 2800000, guid: 0ab67c96916fe4343bd3c1041727dae2, type: 3}
+    Prefab: {fileID: 7880999669688678654, guid: e8c210deacd13b9489985aa64cd18939, type: 3}
+    Radius: 50
+    NumToSpawn: 5
