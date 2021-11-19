@@ -10,6 +10,7 @@ GameObject:
   m_Component:
   - component: {fileID: 3542264547414432944}
   - component: {fileID: -3140239374589140662}
+  - component: {fileID: 2897870522031952730}
   m_Layer: 0
   m_Name: ObjectPlacer_Rainforest
   m_TagString: Untagged
@@ -27,6 +28,7 @@ Transform:
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 0}
   m_RootOrder: 0
@@ -44,5 +46,20 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   TargetDensity: 0.1
-  MaxSpawnCount: 1000
-  Prefab: {fileID: 533686676931778100, guid: fa4489f939f0ea84b8615d218e7d844e, type: 3}
+  MaxSpawnCount: 500
+  Prefab: {fileID: 8070635081183022859, guid: 73a7e2a3e0c079b498becc0c486bee6b, type: 3}
+--- !u!114 &2897870522031952730
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5026835040351420586}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 1c8a8a0e2f12a0044a163903175ab867, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  TargetDensity: 0.1
+  MaxSpawnCount: 500
+  Prefab: {fileID: 7499450935267296699, guid: 7a92a281698b86c42917ebf251601f49, type: 3}
