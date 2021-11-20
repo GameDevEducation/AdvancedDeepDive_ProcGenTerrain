@@ -6,7 +6,7 @@ public class HeightMapModifier_SetValue : BaseHeightMapModifier
 {
     [SerializeField] float TargetHeight;
 
-    public override void Execute(int mapResolution, float[,] heightMap, Vector3 heightmapScale, byte[,] biomeMap = null, int biomeIndex = -1, BiomeConfigSO biome = null)
+    public override void Execute(ProcGenConfigSO globalConfig, int mapResolution, float[,] heightMap, Vector3 heightmapScale, byte[,] biomeMap = null, int biomeIndex = -1, BiomeConfigSO biome = null)
     {
         for (int y = 0; y < mapResolution; ++y)
         {

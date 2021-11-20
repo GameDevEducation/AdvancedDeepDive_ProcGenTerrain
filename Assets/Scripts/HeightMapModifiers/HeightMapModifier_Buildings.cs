@@ -2,6 +2,10 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
+#if UNITY_EDITOR
+using UnityEditor;
+#endif // UNITY_EDITOR
+
 [System.Serializable]
 public class BuildingConfig
 {
@@ -9,13 +13,21 @@ public class BuildingConfig
     public GameObject Prefab;
     public int Radius;
     public int NumToSpawn = 1;
+
+    public bool HasHeightLimits = false;
+    public float MinHeightToSpawn = 0f;
+    public float MaxHeightToSpawn = 0f;
+
+    public bool CanGoInWater = false;
+    public bool CanGoAboveWater = true;
 }
 
 public class HeightMapModifier_Buildings : BaseHeightMapModifier
 {
     [SerializeField] List<BuildingConfig> Buildings;
 
-    protected void SpawnBuilding(BuildingConfig building, int spawnX, int spawnY,
+    protected void SpawnBuilding(ProcGenConfigSO globalConfig, BuildingConfig building, 
+                                 int spawnX, int spawnY,
                                  int mapResolution, float[,] heightMap, Vector3 heightmapScale,
                                  Transform buildingRoot)
     {
@@ -37,6 +49,11 @@ public class HeightMapModifier_Buildings : BaseHeightMapModifier
         averageHeight /= numHeightSamples;
 
         float targetHeight = averageHeight;
+
+        if (!building.CanGoInWater)
+            targetHeight = Mathf.Max(targetHeight, globalConfig.WaterHeight / heightmapScale.y);
+        if (building.HasHeightLimits)
+            targetHeight = Mathf.Clamp(targetHeight, building.MinHeightToSpawn / heightmapScale.y, building.MaxHeightToSpawn / heightmapScale.y);
 
         // apply the building heightmap
         for (int y = -building.Radius; y <= building.Radius; ++y)
@@ -61,22 +78,65 @@ public class HeightMapModifier_Buildings : BaseHeightMapModifier
         Vector3 buildingLocation = new Vector3(spawnY * heightmapScale.z, 
                                                heightMap[spawnX, spawnY] * heightmapScale.y, 
                                                spawnX * heightmapScale.x);
+
+        // instantiate the prefab
+#if UNITY_EDITOR
+        if (Application.isPlaying)
+            Instantiate(building.Prefab, buildingLocation, Quaternion.identity, buildingRoot);
+        else
+        {
+            var spawnedGO = PrefabUtility.InstantiatePrefab(building.Prefab, buildingRoot) as GameObject;
+            spawnedGO.transform.position = buildingLocation;
+            Undo.RegisterCreatedObjectUndo(spawnedGO, "Add building");
+        }
+#else
         Instantiate(building.Prefab, buildingLocation, Quaternion.identity, buildingRoot);
+#endif // UNITY_EDITOR   
     }
 
-    public override void Execute(int mapResolution, float[,] heightMap, Vector3 heightmapScale, byte[,] biomeMap = null, int biomeIndex = -1, BiomeConfigSO biome = null)
+    protected List<Vector2Int> GetSpawnLocationsForBuilding(ProcGenConfigSO globalConfig, int mapResolution, float[,] heightMap, Vector3 heightmapScale, BuildingConfig buildingConfig)
+    {
+        List<Vector2Int> locations = new List<Vector2Int>(mapResolution * mapResolution / 10);
+
+        for (int y = buildingConfig.Radius; (y < mapResolution - buildingConfig.Radius); y += buildingConfig.Radius * 2)
+        {
+            for (int x = buildingConfig.Radius; (x < mapResolution - buildingConfig.Radius); x += buildingConfig.Radius * 2)
+            {
+                float height = heightMap[x, y] * heightmapScale.y;
+
+                // height is invalid?
+                if (height < globalConfig.WaterHeight && !buildingConfig.CanGoInWater)
+                    continue;
+                if (height >= globalConfig.WaterHeight && !buildingConfig.CanGoAboveWater)
+                    continue;
+
+                // skip if outside of height limits
+                if (buildingConfig.HasHeightLimits && (height < buildingConfig.MinHeightToSpawn || height >= buildingConfig.MaxHeightToSpawn))
+                    continue;
+
+                locations.Add(new Vector2Int(x, y));
+            }
+        }
+
+        return locations;
+    }
+
+    public override void Execute(ProcGenConfigSO globalConfig, int mapResolution, float[,] heightMap, Vector3 heightmapScale, byte[,] biomeMap = null, int biomeIndex = -1, BiomeConfigSO biome = null)
     {
         var buildingRoot = FindObjectOfType<ProcGenManager>().transform;
 
         // traverse the buildings
         foreach(var building in Buildings)
         {
-            for (int buildingIndex = 0; buildingIndex < building.NumToSpawn; ++ buildingIndex)
-            {
-                int spawnX = Random.Range(building.Radius, mapResolution - building.Radius);
-                int spawnY = Random.Range(building.Radius, mapResolution - building.Radius);
+            var spawnLocations = GetSpawnLocationsForBuilding(globalConfig, mapResolution, heightMap, heightmapScale, building);
 
-                SpawnBuilding(building, spawnX, spawnY, mapResolution, heightMap, heightmapScale, buildingRoot);
+            for (int buildingIndex = 0; buildingIndex < building.NumToSpawn && spawnLocations.Count > 0; ++ buildingIndex)
+            {
+                int spawnIndex = Random.Range(0, spawnLocations.Count);
+                var spawnPos = spawnLocations[spawnIndex];
+                spawnLocations.RemoveAt(spawnIndex);
+
+                SpawnBuilding(globalConfig, building, spawnPos.x, spawnPos.y, mapResolution, heightMap, heightmapScale, buildingRoot);
             }
         }
     }

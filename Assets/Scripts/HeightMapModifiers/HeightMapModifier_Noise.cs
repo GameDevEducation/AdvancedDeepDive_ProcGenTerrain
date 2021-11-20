@@ -13,7 +13,7 @@ public class HeightMapModifier_Noise : BaseHeightMapModifier
     [SerializeField] float YScaleVariationPerPass = 2f;
     [SerializeField] float HeightDeltaVariationPerPass = 0.5f;
 
-    public override void Execute(int mapResolution, float[,] heightMap, Vector3 heightmapScale, byte[,] biomeMap = null, int biomeIndex = -1, BiomeConfigSO biome = null)
+    public override void Execute(ProcGenConfigSO globalConfig, int mapResolution, float[,] heightMap, Vector3 heightmapScale, byte[,] biomeMap = null, int biomeIndex = -1, BiomeConfigSO biome = null)
     {
         float workingXScale = XScale;
         float workingYScale = YScale;

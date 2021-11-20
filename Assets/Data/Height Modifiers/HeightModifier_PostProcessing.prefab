@@ -30,6 +30,7 @@ Transform:
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 0}
   m_RootOrder: 0
@@ -96,5 +97,5 @@ MonoBehaviour:
   Buildings:
   - HeightMap: {fileID: 2800000, guid: 0ab67c96916fe4343bd3c1041727dae2, type: 3}
     Prefab: {fileID: 7880999669688678654, guid: e8c210deacd13b9489985aa64cd18939, type: 3}
-    Radius: 50
+    Radius: 25
     NumToSpawn: 5

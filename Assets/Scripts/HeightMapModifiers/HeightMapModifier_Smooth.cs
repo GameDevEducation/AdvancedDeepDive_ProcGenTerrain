@@ -6,7 +6,7 @@ public class HeightMapModifier_Smooth : BaseHeightMapModifier
 {
     [SerializeField] int SmoothingKernelSize = 5;
 
-    public override void Execute(int mapResolution, float[,] heightMap, Vector3 heightmapScale, byte[,] biomeMap = null, int biomeIndex = -1, BiomeConfigSO biome = null)
+    public override void Execute(ProcGenConfigSO globalConfig, int mapResolution, float[,] heightMap, Vector3 heightmapScale, byte[,] biomeMap = null, int biomeIndex = -1, BiomeConfigSO biome = null)
     {
         if (biomeMap != null)
         {

@@ -31,6 +31,8 @@ public class ProcGenConfigSO : ScriptableObject
 
     public GameObject PaintingPostProcessingModifier;
 
+    public float WaterHeight = 15f;
+
     public int NumBiomes => Biomes.Count;
 
     public float TotalWeighting

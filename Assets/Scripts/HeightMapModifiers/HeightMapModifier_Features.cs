@@ -57,7 +57,7 @@ public class HeightMapModifier_Features : BaseHeightMapModifier
         }
     }
 
-    public override void Execute(int mapResolution, float[,] heightMap, Vector3 heightmapScale, byte[,] biomeMap = null, int biomeIndex = -1, BiomeConfigSO biome = null)
+    public override void Execute(ProcGenConfigSO globalConfig, int mapResolution, float[,] heightMap, Vector3 heightmapScale, byte[,] biomeMap = null, int biomeIndex = -1, BiomeConfigSO biome = null)
     {
         // traverse the features
         foreach(var feature in Features)

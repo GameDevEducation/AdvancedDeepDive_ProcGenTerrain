@@ -15,7 +15,6 @@ public class ProcGenManager : MonoBehaviour
 
     Dictionary<TextureConfig, int> BiomeTextureToTerrainLayerIndex = new Dictionary<TextureConfig, int>();
 
-#if UNITY_EDITOR
     byte[,] BiomeMap_LowResolution;
     float[,] BiomeStrengths_LowResolution;
 
@@ -23,7 +22,6 @@ public class ProcGenManager : MonoBehaviour
     float[,] BiomeStrengths;
 
     float[,] SlopeMap;
-#endif // UNITY_EDITOR
 
     // Start is called before the first frame update
     void Start()
@@ -37,41 +35,65 @@ public class ProcGenManager : MonoBehaviour
         
     }
 
-#if UNITY_EDITOR
-    public void RegenerateTextures()
-    {
-        Perform_LayerSetup();    
-    }
-    
-    public void RegenerateWorld()
+    public IEnumerator AsyncRegenerateWorld(System.Action<int, int, string> reportStatusFn = null)
     {
         // cache the map resolution
         int mapResolution = TargetTerrain.terrainData.heightmapResolution;
         int alphaMapResolution = TargetTerrain.terrainData.alphamapResolution;
 
+        if (reportStatusFn != null) reportStatusFn.Invoke(1, 7, "Beginning Generation");
+        yield return new WaitForSeconds(1f);
+
         // clear out any previously spawned objects
         for (int childIndex = transform.childCount - 1; childIndex >= 0; --childIndex)
         {
-            Undo.DestroyObjectImmediate(transform.GetChild(childIndex).gameObject);
+#if UNITY_EDITOR
+            if (Application.isPlaying)
+                Destroy(transform.GetChild(childIndex).gameObject);
+            else
+                Undo.DestroyObjectImmediate(transform.GetChild(childIndex).gameObject);
+#else
+            Destroy(transform.GetChild(childIndex).gameObject);
+#endif // UNITY_EDITOR
         }
+
+        if (reportStatusFn != null) reportStatusFn.Invoke(2, 7, "Building texture map");
+        yield return new WaitForSeconds(1f);
 
         // Generate the texture mapping
         Perform_GenerateTextureMapping();
 
+        if (reportStatusFn != null) reportStatusFn.Invoke(3, 7, "Build low res biome map");
+        yield return new WaitForSeconds(1f);
+
         // generate the low resolution biome map
         Perform_BiomeGeneration_LowResolution((int)Config.BiomeMapResolution);
+
+        if (reportStatusFn != null) reportStatusFn.Invoke(4, 7, "Build high res biome map");
+        yield return new WaitForSeconds(1f);
 
         // generate the high resolution biome map
         Perform_BiomeGeneration_HighResolution((int)Config.BiomeMapResolution, mapResolution);
 
+        if (reportStatusFn != null) reportStatusFn.Invoke(5, 7, "Modifying heights");
+        yield return new WaitForSeconds(1f);
+
         // update the terrain heights
         Perform_HeightMapModification(mapResolution, alphaMapResolution);
+
+        if (reportStatusFn != null) reportStatusFn.Invoke(6, 7, "Painting the terrain");
+        yield return new WaitForSeconds(1f);
 
         // paint the terrain
         Perform_TerrainPainting(mapResolution, alphaMapResolution);
 
+        if (reportStatusFn != null) reportStatusFn.Invoke(7, 7, "Placing objects");
+        yield return new WaitForSeconds(1f);
+
         // place the objects
         Perform_ObjectPlacement(mapResolution, alphaMapResolution);
+
+        if (reportStatusFn != null) reportStatusFn.Invoke(7, 7, "Generation complete");
     }
 
     void Perform_GenerateTextureMapping()
@@ -115,6 +137,12 @@ public class ProcGenManager : MonoBehaviour
             BiomeTextureToTerrainLayerIndex[textureConfig] = layerIndex;
             ++layerIndex;
         }
+    }
+
+#if UNITY_EDITOR
+    public void RegenerateTextures()
+    {
+        Perform_LayerSetup();
     }
 
     void Perform_LayerSetup()
@@ -182,6 +210,7 @@ public class ProcGenManager : MonoBehaviour
         Undo.RecordObject(TargetTerrain.terrainData, "Updating terrain layers");
         TargetTerrain.terrainData.terrainLayers = newLayers.ToArray();
     }
+#endif // UNITY_EDITOR
 
     void Perform_BiomeGeneration_LowResolution(int mapResolution)
     {
@@ -220,6 +249,7 @@ public class ProcGenManager : MonoBehaviour
             Perform_SpawnIndividualBiome(biomeIndex, mapResolution);
         }
 
+#if UNITY_EDITOR
         // save out the biome map
         Texture2D biomeMap = new Texture2D(mapResolution, mapResolution, TextureFormat.RGB24, false);
         for (int y = 0; y < mapResolution; ++y)
@@ -234,6 +264,7 @@ public class ProcGenManager : MonoBehaviour
         biomeMap.Apply();
 
         System.IO.File.WriteAllBytes("BiomeMap_LowResolution.png", biomeMap.EncodeToPNG());
+#endif // UNITY_EDITOR
     }
 
     Vector2Int[] NeighbourOffsets = new Vector2Int[] {
@@ -379,6 +410,7 @@ public class ProcGenManager : MonoBehaviour
             }
         }
 
+#if UNITY_EDITOR
         // save out the biome map
         Texture2D biomeMap = new Texture2D(highResMapSize, highResMapSize, TextureFormat.RGB24, false);
         for (int y = 0; y < highResMapSize; ++y)
@@ -392,7 +424,8 @@ public class ProcGenManager : MonoBehaviour
         }
         biomeMap.Apply();
 
-        System.IO.File.WriteAllBytes("BiomeMap_HighResolution.png", biomeMap.EncodeToPNG());        
+        System.IO.File.WriteAllBytes("BiomeMap_HighResolution.png", biomeMap.EncodeToPNG());
+#endif // UNITY_EDITOR
     }
 
     void Perform_HeightMapModification(int mapResolution, int alphaMapResolution)
@@ -406,7 +439,7 @@ public class ProcGenManager : MonoBehaviour
 
             foreach(var modifier in modifiers)
             {
-                modifier.Execute(mapResolution, heightMap, TargetTerrain.terrainData.heightmapScale);
+                modifier.Execute(Config, mapResolution, heightMap, TargetTerrain.terrainData.heightmapScale);
             }
         }
 
@@ -421,7 +454,7 @@ public class ProcGenManager : MonoBehaviour
 
             foreach(var modifier in modifiers)
             {
-                modifier.Execute(mapResolution, heightMap, TargetTerrain.terrainData.heightmapScale, BiomeMap, biomeIndex, biome);
+                modifier.Execute(Config, mapResolution, heightMap, TargetTerrain.terrainData.heightmapScale, BiomeMap, biomeIndex, biome);
             }
         }
 
@@ -432,7 +465,7 @@ public class ProcGenManager : MonoBehaviour
         
             foreach(var modifier in modifiers)
             {
-                modifier.Execute(mapResolution, heightMap, TargetTerrain.terrainData.heightmapScale);
+                modifier.Execute(Config, mapResolution, heightMap, TargetTerrain.terrainData.heightmapScale);
             }
         }     
 
@@ -516,9 +549,8 @@ public class ProcGenManager : MonoBehaviour
 
             foreach(var modifier in modifiers)
             {
-                modifier.Execute(transform, mapResolution, heightMap, TargetTerrain.terrainData.heightmapScale, SlopeMap, alphaMaps, alphaMapResolution, BiomeMap, biomeIndex, biome);
+                modifier.Execute(Config, transform, mapResolution, heightMap, TargetTerrain.terrainData.heightmapScale, SlopeMap, alphaMaps, alphaMapResolution, BiomeMap, biomeIndex, biome);
             }
         }        
     }
-#endif // UNITY_EDITOR
 }
