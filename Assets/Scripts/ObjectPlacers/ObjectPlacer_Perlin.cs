@@ -8,11 +8,8 @@ using UnityEditor;
 
 public class ObjectPlacer_Perlin : BaseObjectPlacer
 {
-    [SerializeField] float TargetDensity = 0.1f;
-    [SerializeField] int MaxSpawnCount = 1000;
     [SerializeField] Vector2 NoiseScale = new Vector2(1f / 128f, 1f / 128f);
     [SerializeField] float NoiseThreshold = 0.5f;
-    [SerializeField] GameObject Prefab;
 
     List<Vector3> GetFilteredLocationsForBiome(ProcGenConfigSO globalConfig, int mapResolution, float[,] heightMap, Vector3 heightmapScale, byte[,] biomeMap, int biomeIndex)
     {
@@ -34,16 +31,6 @@ public class ObjectPlacer_Perlin : BaseObjectPlacer
 
                 float height = heightMap[x, y] * heightmapScale.y;
 
-                // height is invalid?
-                if (height < globalConfig.WaterHeight && !CanGoInWater)
-                    continue;
-                if (height >= globalConfig.WaterHeight && !CanGoAboveWater)
-                    continue;
-
-                // skip if outside of height limits
-                if (HasHeightLimits && (height < MinHeightToSpawn || height >= MaxHeightToSpawn))
-                    continue;
-
                 locations.Add(new Vector3(y * heightmapScale.z, height, x * heightmapScale.x));
             }
         }
@@ -53,30 +40,12 @@ public class ObjectPlacer_Perlin : BaseObjectPlacer
 
     public override void Execute(ProcGenConfigSO globalConfig, Transform objectRoot, int mapResolution, float[,] heightMap, Vector3 heightmapScale, float[,] slopeMap, float[,,] alphaMaps, int alphaMapResolution, byte[,] biomeMap = null, int biomeIndex = -1, BiomeConfigSO biome = null)
     {
+        base.Execute(globalConfig, objectRoot, mapResolution, heightMap, heightmapScale, slopeMap, alphaMaps, alphaMapResolution,
+                     biomeMap, biomeIndex, biome);
+
         // get potential spawn location
         List<Vector3> candidateLocations = GetFilteredLocationsForBiome(globalConfig, mapResolution, heightMap, heightmapScale, biomeMap, biomeIndex);
 
-        int numToSpawn = Mathf.FloorToInt(Mathf.Min(MaxSpawnCount, candidateLocations.Count * TargetDensity));
-        for (int index = 0; index < numToSpawn; ++index)
-        {
-            // pick a random location to spawn at
-            int randomLocationIndex = Random.Range(0, candidateLocations.Count);
-            Vector3 spawnLocation = candidateLocations[randomLocationIndex];
-            candidateLocations.RemoveAt(randomLocationIndex);
-
-            // instantiate the prefab
-#if UNITY_EDITOR
-            if (Application.isPlaying)
-                Instantiate(Prefab, spawnLocation, Quaternion.identity, objectRoot);
-            else
-            {
-                var spawnedGO = PrefabUtility.InstantiatePrefab(Prefab, objectRoot) as GameObject;
-                spawnedGO.transform.position = spawnLocation;
-                Undo.RegisterCreatedObjectUndo(spawnedGO, "Placed object");
-            }
-#else
-            Instantiate(Prefab, spawnLocation, Quaternion.identity, objectRoot);
-#endif // UNITY_EDITOR
-        }
+        ExecuteSimpleSpawning(globalConfig, objectRoot, candidateLocations);
     }
 }

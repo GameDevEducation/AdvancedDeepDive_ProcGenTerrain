@@ -9,8 +9,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 3542264547414432944}
-  - component: {fileID: -3140239374589140662}
-  - component: {fileID: 2897870522031952730}
+  - component: {fileID: -5093495466892966556}
   m_Layer: 0
   m_Name: ObjectPlacer_Rainforest
   m_TagString: Untagged
@@ -33,7 +32,7 @@ Transform:
   m_Father: {fileID: 0}
   m_RootOrder: 0
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!114 &-3140239374589140662
+--- !u!114 &-5093495466892966556
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -42,34 +41,27 @@ MonoBehaviour:
   m_GameObject: {fileID: 5026835040351420586}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 1c8a8a0e2f12a0044a163903175ab867, type: 3}
+  m_Script: {fileID: 11500000, guid: d84589edcc7fc7d46b0b96a19205c372, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  HasHeightLimits: 0
-  MinHeightToSpawn: 0
-  MaxHeightToSpawn: 0
-  CanGoInWater: 0
-  CanGoAboveWater: 1
+  Objects:
+  - HasHeightLimits: 0
+    MinHeightToSpawn: 0
+    MaxHeightToSpawn: 0
+    CanGoInWater: 0
+    CanGoAboveWater: 1
+    Weighting: 0.1
+    Prefabs:
+    - {fileID: 7499450935267296699, guid: 7a92a281698b86c42917ebf251601f49, type: 3}
+  - HasHeightLimits: 0
+    MinHeightToSpawn: 0
+    MaxHeightToSpawn: 0
+    CanGoInWater: 0
+    CanGoAboveWater: 1
+    Weighting: 0.9
+    Prefabs:
+    - {fileID: 8070635081183022859, guid: 73a7e2a3e0c079b498becc0c486bee6b, type: 3}
   TargetDensity: 0.1
   MaxSpawnCount: 250
-  Prefab: {fileID: 8070635081183022859, guid: 73a7e2a3e0c079b498becc0c486bee6b, type: 3}
---- !u!114 &2897870522031952730
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 5026835040351420586}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 1c8a8a0e2f12a0044a163903175ab867, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  HasHeightLimits: 0
-  MinHeightToSpawn: 0
-  MaxHeightToSpawn: 0
-  CanGoInWater: 0
-  CanGoAboveWater: 1
-  TargetDensity: 0.1
-  MaxSpawnCount: 250
-  Prefab: {fileID: 7499450935267296699, guid: 7a92a281698b86c42917ebf251601f49, type: 3}
+  NoiseScale: {x: 0.015625, y: 0.015625}
+  NoiseThreshold: 0.5
