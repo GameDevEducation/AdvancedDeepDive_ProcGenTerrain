@@ -67,6 +67,10 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   Strength: 1
   SmoothingKernelSize: 4
+  UseAdaptiveKernel: 1
+  MaxHeightThreshold: 0.15
+  MinKernelSize: 1
+  MaxKernelSize: 5
 --- !u!114 &621538915513122900
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -99,3 +103,8 @@ MonoBehaviour:
     Prefab: {fileID: 7880999669688678654, guid: e8c210deacd13b9489985aa64cd18939, type: 3}
     Radius: 25
     NumToSpawn: 5
+    HasHeightLimits: 0
+    MinHeightToSpawn: 0
+    MaxHeightToSpawn: 0
+    CanGoInWater: 0
+    CanGoAboveWater: 1

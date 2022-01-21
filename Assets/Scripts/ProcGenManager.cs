@@ -13,6 +13,9 @@ public class ProcGenManager : MonoBehaviour
     [SerializeField] ProcGenConfigSO Config;
     [SerializeField] Terrain TargetTerrain;
 
+    [Header("Debugging")]
+    [SerializeField] bool DEBUG_TurnOffObjectPlacers = false;
+
     Dictionary<TextureConfig, int> BiomeTextureToTerrainLayerIndex = new Dictionary<TextureConfig, int>();
 
     byte[,] BiomeMap_LowResolution;
@@ -204,7 +207,7 @@ public class ProcGenManager : MonoBehaviour
 
             // save as asset
             string layerPath = System.IO.Path.Combine(scenePath, "Layer_" + textureLayerIndex);
-            AssetDatabase.CreateAsset(textureLayer, layerPath);
+            AssetDatabase.CreateAsset(textureLayer, $"{layerPath}.asset");
         }
 
         Undo.RecordObject(TargetTerrain.terrainData, "Updating terrain layers");
@@ -535,6 +538,9 @@ public class ProcGenManager : MonoBehaviour
 
     void Perform_ObjectPlacement(int mapResolution, int alphaMapResolution)
     {
+        if (DEBUG_TurnOffObjectPlacers)
+            return;
+
         float[,] heightMap = TargetTerrain.terrainData.GetHeights(0, 0, mapResolution, mapResolution);
         float[,,] alphaMaps = TargetTerrain.terrainData.GetAlphamaps(0, 0, alphaMapResolution, alphaMapResolution);
 

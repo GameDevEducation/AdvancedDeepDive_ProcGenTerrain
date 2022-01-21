@@ -28,6 +28,7 @@ Transform:
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 0}
   m_RootOrder: 0
@@ -60,6 +61,17 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   Strength: 0.25
   HeightDelta: 20
+  Passes:
+  - HeightDelta: 20
+    NoiseScale: 0.015625
+  - HeightDelta: 10
+    NoiseScale: 0.03125
+  - HeightDelta: 5
+    NoiseScale: 0.0625
+  - HeightDelta: 2.5
+    NoiseScale: 0.125
+  - HeightDelta: 1.25
+    NoiseScale: 0.25
   XScale: 0.015625
   YScale: 0.015625
   NumPasses: 5

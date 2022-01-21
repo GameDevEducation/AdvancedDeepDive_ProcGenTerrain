@@ -27,6 +27,7 @@ Transform:
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 0}
   m_RootOrder: 0
@@ -49,3 +50,13 @@ MonoBehaviour:
     NormalMap: {fileID: 0}
   - Diffuse: {fileID: 2800000, guid: 350a49d29a0f7b94faf91f61ef7ee19f, type: 3}
     NormalMap: {fileID: 0}
+  BaseTexture:
+    Diffuse: {fileID: 2800000, guid: de887a8a677123343b1ff6e6ad831d42, type: 3}
+    NormalMap: {fileID: 0}
+  PaintingConfigs:
+  - TextureToPaint:
+      Diffuse: {fileID: 2800000, guid: 350a49d29a0f7b94faf91f61ef7ee19f, type: 3}
+      NormalMap: {fileID: 0}
+    IntensityModifier: 1
+    NoiseScale: 0.015625
+    NoiseThreshold: 0.75
