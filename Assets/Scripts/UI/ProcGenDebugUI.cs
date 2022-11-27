@@ -38,8 +38,8 @@ public class ProcGenDebugUI : MonoBehaviour
         yield return null;
     }
 
-    void OnStatusReported(int step, int totalSteps, string status)
+    void OnStatusReported(EGenerationStage currentStage, string status)
     {
-        StatusDisplay.text = $"Step {step} of {totalSteps}: {status}";
+        StatusDisplay.text = $"Step {(int)currentStage} of {(int)EGenerationStage.NumStages}: {status}";
     }
 }

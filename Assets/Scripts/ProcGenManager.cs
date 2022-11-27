@@ -8,6 +8,21 @@ using UnityEditor;
 using UnityEngine.SceneManagement;
 #endif // UNITY_EDITOR
 
+public enum EGenerationStage
+{
+    Beginning = 1,
+
+    BuildTextureMap,
+    BuildLowResolutionBiomeMap,
+    BuildHighResolutionBiomeMap,
+    HeightMapGeneration,
+    TerrainPainting,
+    ObjectPlacement,
+
+    Complete,
+    NumStages = Complete
+}
+
 public class ProcGenManager : MonoBehaviour
 {
     [SerializeField] ProcGenConfigSO Config;
@@ -26,25 +41,13 @@ public class ProcGenManager : MonoBehaviour
 
     float[,] SlopeMap;
 
-    // Start is called before the first frame update
-    void Start()
-    {
-        
-    }
-
-    // Update is called once per frame
-    void Update()
-    {
-        
-    }
-
-    public IEnumerator AsyncRegenerateWorld(System.Action<int, int, string> reportStatusFn = null)
+    public IEnumerator AsyncRegenerateWorld(System.Action<EGenerationStage, string> reportStatusFn = null)
     {
         // cache the map resolution
         int mapResolution = TargetTerrain.terrainData.heightmapResolution;
         int alphaMapResolution = TargetTerrain.terrainData.alphamapResolution;
 
-        if (reportStatusFn != null) reportStatusFn.Invoke(1, 7, "Beginning Generation");
+        if (reportStatusFn != null) reportStatusFn.Invoke(EGenerationStage.Beginning, "Beginning Generation");
         yield return new WaitForSeconds(1f);
 
         // clear out any previously spawned objects
@@ -60,43 +63,43 @@ public class ProcGenManager : MonoBehaviour
 #endif // UNITY_EDITOR
         }
 
-        if (reportStatusFn != null) reportStatusFn.Invoke(2, 7, "Building texture map");
+        if (reportStatusFn != null) reportStatusFn.Invoke(EGenerationStage.BuildTextureMap, "Building texture map");
         yield return new WaitForSeconds(1f);
 
         // Generate the texture mapping
         Perform_GenerateTextureMapping();
 
-        if (reportStatusFn != null) reportStatusFn.Invoke(3, 7, "Build low res biome map");
+        if (reportStatusFn != null) reportStatusFn.Invoke(EGenerationStage.BuildLowResolutionBiomeMap, "Build low res biome map");
         yield return new WaitForSeconds(1f);
 
         // generate the low resolution biome map
         Perform_BiomeGeneration_LowResolution((int)Config.BiomeMapResolution);
 
-        if (reportStatusFn != null) reportStatusFn.Invoke(4, 7, "Build high res biome map");
+        if (reportStatusFn != null) reportStatusFn.Invoke(EGenerationStage.BuildHighResolutionBiomeMap, "Build high res biome map");
         yield return new WaitForSeconds(1f);
 
         // generate the high resolution biome map
         Perform_BiomeGeneration_HighResolution((int)Config.BiomeMapResolution, mapResolution);
 
-        if (reportStatusFn != null) reportStatusFn.Invoke(5, 7, "Modifying heights");
+        if (reportStatusFn != null) reportStatusFn.Invoke(EGenerationStage.HeightMapGeneration, "Modifying heights");
         yield return new WaitForSeconds(1f);
 
         // update the terrain heights
         Perform_HeightMapModification(mapResolution, alphaMapResolution);
 
-        if (reportStatusFn != null) reportStatusFn.Invoke(6, 7, "Painting the terrain");
+        if (reportStatusFn != null) reportStatusFn.Invoke(EGenerationStage.TerrainPainting, "Painting the terrain");
         yield return new WaitForSeconds(1f);
 
         // paint the terrain
         Perform_TerrainPainting(mapResolution, alphaMapResolution);
 
-        if (reportStatusFn != null) reportStatusFn.Invoke(7, 7, "Placing objects");
+        if (reportStatusFn != null) reportStatusFn.Invoke(EGenerationStage.ObjectPlacement, "Placing objects");
         yield return new WaitForSeconds(1f);
 
         // place the objects
         Perform_ObjectPlacement(mapResolution, alphaMapResolution);
 
-        if (reportStatusFn != null) reportStatusFn.Invoke(7, 7, "Generation complete");
+        if (reportStatusFn != null) reportStatusFn.Invoke(EGenerationStage.Complete, "Generation complete");
     }
 
     void Perform_GenerateTextureMapping()

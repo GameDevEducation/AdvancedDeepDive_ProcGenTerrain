@@ -36,8 +36,8 @@ public class ProcGenManagerEditor : Editor
         yield return null;
     }
 
-    void OnStatusReported(int step, int totalSteps, string status)
+    void OnStatusReported(EGenerationStage currentStage, string status)
     {
-        Progress.Report(ProgressID, step, totalSteps, status);
+        Progress.Report(ProgressID, (int)currentStage, (int)EGenerationStage.NumStages, status);
     }
 }
