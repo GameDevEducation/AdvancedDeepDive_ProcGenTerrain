@@ -13,11 +13,13 @@ public enum EGenerationStage
     Beginning = 1,
 
     BuildTextureMap,
+    BuildDetailMap,
     BuildLowResolutionBiomeMap,
     BuildHighResolutionBiomeMap,
     HeightMapGeneration,
     TerrainPainting,
     ObjectPlacement,
+    DetailPainting,
 
     Complete,
     NumStages = Complete
@@ -32,6 +34,7 @@ public class ProcGenManager : MonoBehaviour
     [SerializeField] bool DEBUG_TurnOffObjectPlacers = false;
 
     Dictionary<TextureConfig, int> BiomeTextureToTerrainLayerIndex = new Dictionary<TextureConfig, int>();
+    Dictionary<TerrainDetailConfig, int> BiomeTerrainDetailToDetailLayerIndex = new Dictionary<TerrainDetailConfig, int>();
 
     byte[,] BiomeMap_LowResolution;
     float[,] BiomeStrengths_LowResolution;
@@ -46,6 +49,8 @@ public class ProcGenManager : MonoBehaviour
         // cache the map resolution
         int mapResolution = TargetTerrain.terrainData.heightmapResolution;
         int alphaMapResolution = TargetTerrain.terrainData.alphamapResolution;
+        int detailMapResolution = TargetTerrain.terrainData.detailResolution;
+        int maxDetailsPerPatch = TargetTerrain.terrainData.detailResolutionPerPatch;
 
         if (reportStatusFn != null) reportStatusFn.Invoke(EGenerationStage.Beginning, "Beginning Generation");
         yield return new WaitForSeconds(1f);
@@ -68,6 +73,12 @@ public class ProcGenManager : MonoBehaviour
 
         // Generate the texture mapping
         Perform_GenerateTextureMapping();
+
+        if (reportStatusFn != null) reportStatusFn.Invoke(EGenerationStage.BuildDetailMap, "Building detail map");
+        yield return new WaitForSeconds(1f);
+
+        // Generate the detail mapping
+        Perform_GenerateTerrainDetailMapping();
 
         if (reportStatusFn != null) reportStatusFn.Invoke(EGenerationStage.BuildLowResolutionBiomeMap, "Build low res biome map");
         yield return new WaitForSeconds(1f);
@@ -98,6 +109,12 @@ public class ProcGenManager : MonoBehaviour
 
         // place the objects
         Perform_ObjectPlacement(mapResolution, alphaMapResolution);
+
+        if (reportStatusFn != null) reportStatusFn.Invoke(EGenerationStage.DetailPainting, "Placing objects");
+        yield return new WaitForSeconds(1f);
+
+        // paint the details
+        Perform_DetailPainting(mapResolution, alphaMapResolution, detailMapResolution, maxDetailsPerPatch);
 
         if (reportStatusFn != null) reportStatusFn.Invoke(EGenerationStage.Complete, "Generation complete");
     }
@@ -145,10 +162,58 @@ public class ProcGenManager : MonoBehaviour
         }
     }
 
+    void Perform_GenerateTerrainDetailMapping()
+    {
+        BiomeTerrainDetailToDetailLayerIndex.Clear();
+
+        // build up list of all terrain details
+        List<TerrainDetailConfig> allTerrainDetails = new List<TerrainDetailConfig>();
+        foreach (var biomeMetadata in Config.Biomes)
+        {
+            List<TerrainDetailConfig> biomeTerrainDetails = biomeMetadata.Biome.RetrieveTerrainDetails();
+
+            if (biomeTerrainDetails == null || biomeTerrainDetails.Count == 0)
+                continue;
+
+            allTerrainDetails.AddRange(biomeTerrainDetails);
+        }
+
+        if (Config.DetailPaintingPostProcessingModifier != null)
+        {
+            // extract all terrain details from every painter
+            BaseDetailPainter[] allPainters = Config.DetailPaintingPostProcessingModifier.GetComponents<BaseDetailPainter>();
+            foreach (var painter in allPainters)
+            {
+                var terrainDetails = painter.RetrieveTerrainDetails();
+
+                if (terrainDetails == null || terrainDetails.Count == 0)
+                    continue;
+
+                allTerrainDetails.AddRange(terrainDetails);
+            }
+        }
+
+        // filter out any duplicate entries
+        allTerrainDetails = allTerrainDetails.Distinct().ToList();
+
+        // iterate over the terrain detail configs
+        int layerIndex = 0;
+        foreach (var terrainDetail in allTerrainDetails)
+        {
+            BiomeTerrainDetailToDetailLayerIndex[terrainDetail] = layerIndex;
+            ++layerIndex;
+        }
+    }
+
 #if UNITY_EDITOR
     public void RegenerateTextures()
     {
         Perform_LayerSetup();
+    }
+
+    public void RegenerateDetailPrototypes()
+    {
+        Perform_DetailPrototypeSetup();
     }
 
     void Perform_LayerSetup()
@@ -215,6 +280,62 @@ public class ProcGenManager : MonoBehaviour
 
         Undo.RecordObject(TargetTerrain.terrainData, "Updating terrain layers");
         TargetTerrain.terrainData.terrainLayers = newLayers.ToArray();
+    }
+
+    void Perform_DetailPrototypeSetup()
+    {
+        Perform_GenerateTerrainDetailMapping();
+
+        // build the list of detail prototypes
+        var detailPrototypes = new DetailPrototype[BiomeTerrainDetailToDetailLayerIndex.Count];
+        foreach(var kvp in BiomeTerrainDetailToDetailLayerIndex)
+        {
+            TerrainDetailConfig detailData = kvp.Key;
+            int layerIndex = kvp.Value;
+
+            DetailPrototype newDetail = new DetailPrototype();
+
+            // is this a mesh?
+            if (detailData.DetailPrefab)
+            {
+                newDetail.prototype = detailData.DetailPrefab;
+                newDetail.renderMode = DetailRenderMode.VertexLit;
+                newDetail.usePrototypeMesh = true;
+                newDetail.useInstancing = true;
+            }
+            else
+            {
+                newDetail.prototypeTexture = detailData.BillboardTexture;
+                newDetail.renderMode = DetailRenderMode.GrassBillboard;
+                newDetail.usePrototypeMesh = false;
+                newDetail.useInstancing = false;
+                newDetail.healthyColor = detailData.HealthyColour;
+                newDetail.dryColor = detailData.DryColour;
+            }
+
+            // transfer the common data
+            newDetail.minWidth = detailData.MinWidth;
+            newDetail.maxWidth = detailData.MaxWidth;
+            newDetail.minHeight = detailData.MinHeight;
+            newDetail.maxHeight = detailData.MaxHeight;
+            newDetail.noiseSeed = detailData.NoiseSeed;
+            newDetail.noiseSpread = detailData.NoiseSpread;
+            newDetail.holeEdgePadding = detailData.HoleEdgePadding;
+
+            // check the prototype
+            string errorMessage;
+            if (!newDetail.Validate(out errorMessage))
+            {
+                throw new System.InvalidOperationException(errorMessage);
+            }
+
+            detailPrototypes[layerIndex] = newDetail;
+        }
+
+        // update the detail prototypes
+        Undo.RecordObject(TargetTerrain.terrainData, "Updating Detail Prototypes");
+        TargetTerrain.terrainData.detailPrototypes = detailPrototypes;
+        TargetTerrain.terrainData.RefreshPrototypes();
     }
 #endif // UNITY_EDITOR
 
@@ -493,6 +614,11 @@ public class ProcGenManager : MonoBehaviour
         return BiomeTextureToTerrainLayerIndex[textureConfig];
     }
 
+    public int GetDetailLayerForTerrainDetail(TerrainDetailConfig detailConfig)
+    {
+        return BiomeTerrainDetailToDetailLayerIndex[detailConfig];
+    }
+
     void Perform_TerrainPainting(int mapResolution, int alphaMapResolution)
     {
         float[,] heightMap = TargetTerrain.terrainData.GetHeights(0, 0, mapResolution, mapResolution);
@@ -561,5 +687,51 @@ public class ProcGenManager : MonoBehaviour
                 modifier.Execute(Config, transform, mapResolution, heightMap, TargetTerrain.terrainData.heightmapScale, SlopeMap, alphaMaps, alphaMapResolution, BiomeMap, biomeIndex, biome);
             }
         }        
+    }
+
+    void Perform_DetailPainting(int mapResolution, int alphaMapResolution, int detailMapResolution, int maxDetailsPerPatch)
+    {
+        float[,] heightMap = TargetTerrain.terrainData.GetHeights(0, 0, mapResolution, mapResolution);
+        float[,,] alphaMaps = TargetTerrain.terrainData.GetAlphamaps(0, 0, alphaMapResolution, alphaMapResolution);
+
+        // create a new empty set of layers
+        int numDetailLayers = TargetTerrain.terrainData.detailPrototypes.Length;
+        List<int[,]> detailLayerMaps = new List<int[,]>(numDetailLayers);
+        for (int layerIndex = 0; layerIndex < numDetailLayers; ++layerIndex)
+        {
+            detailLayerMaps.Add(new int[detailMapResolution, detailMapResolution]);
+        }
+
+        // run terrain detail painting for each biome
+        for (int biomeIndex = 0; biomeIndex < Config.NumBiomes; ++biomeIndex)
+        {
+            var biome = Config.Biomes[biomeIndex].Biome;
+            if (biome.DetailPainter == null)
+                continue;
+
+            BaseDetailPainter[] modifiers = biome.DetailPainter.GetComponents<BaseDetailPainter>();
+
+            foreach (var modifier in modifiers)
+            {
+                modifier.Execute(this, mapResolution, heightMap, TargetTerrain.terrainData.heightmapScale, SlopeMap, alphaMaps, alphaMapResolution, detailLayerMaps, detailMapResolution, maxDetailsPerPatch, BiomeMap, biomeIndex, biome);
+            }
+        }
+
+        // run detail painting post processing
+        if (Config.DetailPaintingPostProcessingModifier != null)
+        {
+            BaseDetailPainter[] modifiers = Config.DetailPaintingPostProcessingModifier.GetComponents<BaseDetailPainter>();
+
+            foreach (var modifier in modifiers)
+            {
+                modifier.Execute(this, mapResolution, heightMap, TargetTerrain.terrainData.heightmapScale, SlopeMap, alphaMaps, alphaMapResolution, detailLayerMaps, detailMapResolution, maxDetailsPerPatch);
+            }
+        }
+
+        // apply the detail layers
+        for (int layerIndex = 0; layerIndex < numDetailLayers; ++layerIndex)
+        {
+            TargetTerrain.terrainData.SetDetailLayer(0, 0, layerIndex, detailLayerMaps[layerIndex]);
+        }
     }
 }

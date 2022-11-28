@@ -17,6 +17,12 @@ public class ProcGenManagerEditor : Editor
             targetManager.RegenerateTextures();
         }
 
+        if (GUILayout.Button("Regenerate Detail Prototypes"))
+        {
+            ProcGenManager targetManager = serializedObject.targetObject as ProcGenManager;
+            targetManager.RegenerateDetailPrototypes();
+        }
+
         if (GUILayout.Button("Regenerate World"))
         {
             ProcGenManager targetManager = serializedObject.targetObject as ProcGenManager;

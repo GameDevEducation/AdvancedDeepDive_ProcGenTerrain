@@ -16,6 +16,7 @@ public class BiomeConfigSO : ScriptableObject
     public GameObject HeightModifier;
     public GameObject TerrainPainter;
     public GameObject ObjectPlacer;
+    public GameObject DetailPainter;
 
     public List<TextureConfig> RetrieveTextures()
     {
@@ -36,5 +37,26 @@ public class BiomeConfigSO : ScriptableObject
         }
 
         return allTextures;
+    }
+
+    public List<TerrainDetailConfig> RetrieveTerrainDetails()
+    {
+        if (DetailPainter == null)
+            return null;
+
+        // extract all terrain details from every painter
+        List<TerrainDetailConfig> allTerrainDetails = new List<TerrainDetailConfig>();
+        BaseDetailPainter[] allPainters = DetailPainter.GetComponents<BaseDetailPainter>();
+        foreach (var painter in allPainters)
+        {
+            var terrainDetails = painter.RetrieveTerrainDetails();
+
+            if (terrainDetails == null || terrainDetails.Count == 0)
+                continue;
+
+            allTerrainDetails.AddRange(terrainDetails);
+        }
+
+        return allTerrainDetails;
     }
 }

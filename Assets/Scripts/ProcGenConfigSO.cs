@@ -30,6 +30,7 @@ public class ProcGenConfigSO : ScriptableObject
     public GameObject HeightPostProcessingModifier;
 
     public GameObject PaintingPostProcessingModifier;
+    public GameObject DetailPaintingPostProcessingModifier;
 
     public float WaterHeight = 15f;
 

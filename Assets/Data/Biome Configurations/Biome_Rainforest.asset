@@ -20,10 +20,4 @@ MonoBehaviour:
   HeightModifier: {fileID: 4316101915917840975, guid: ad966fb6e759b1a418c596ca3404b279, type: 3}
   TerrainPainter: {fileID: 6126891364327839091, guid: bcd5bb4038c94c447bff56514b9cd728, type: 3}
   ObjectPlacer: {fileID: 5026835040351420586, guid: 1b077a25848bf2e41bc9fd26285915ea, type: 3}
-  Textures:
-  - UniqueID: Rainforest-Grass
-    Diffuse: {fileID: 2800000, guid: e96d0b370a8871148945e2ad5953155c, type: 3}
-    NormalMap: {fileID: 0}
-  - UniqueID: Rainforest-Rock
-    Diffuse: {fileID: 2800000, guid: f3bf1330db471cc4b953400d074a9668, type: 3}
-    NormalMap: {fileID: 0}
+  DetailPainter: {fileID: 3318352233317366910, guid: 33de6e81dd446ed41bca11e1cf883176, type: 3}
