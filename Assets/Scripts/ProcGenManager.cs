@@ -308,7 +308,7 @@ public class ProcGenManager : MonoBehaviour
                 newDetail.prototypeTexture = detailData.BillboardTexture;
                 newDetail.renderMode = DetailRenderMode.GrassBillboard;
                 newDetail.usePrototypeMesh = false;
-                newDetail.useInstancing = false;
+                newDetail.useInstancing = true;
                 newDetail.healthyColor = detailData.HealthyColour;
                 newDetail.dryColor = detailData.DryColour;
             }
