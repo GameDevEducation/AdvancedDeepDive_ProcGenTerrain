@@ -1,0 +1,146 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!1 &2641592558679900223
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 5229378853134418343}
+  - component: {fileID: 2805871854897553735}
+  - component: {fileID: 4088645676158651235}
+  - component: {fileID: -6819612240915361169}
+  m_Layer: 0
+  m_Name: HeightModifier_Initial_Islands
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &5229378853134418343
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2641592558679900223}
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_RootOrder: 0
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &2805871854897553735
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2641592558679900223}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c9ed972aa7df38e4c91cc4c1001d5aba, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  Strength: 1
+  TargetHeight: 5
+--- !u!114 &4088645676158651235
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2641592558679900223}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 0730722240b190c4584f75aa25059d41, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  Strength: 1
+  NumIslands: 100
+  MinIslandSize: 20
+  MaxIslandSize: 80
+  MinIslandHeight: 10
+  MaxIslandHeight: 40
+  AngleNoiseScale: 1
+  DistanceNoiseScale: 1
+  NoiseHeightDelta: 15
+  IslandShapeCurve:
+    serializedVersion: 2
+    m_Curve:
+    - serializedVersion: 3
+      time: 0
+      value: 1
+      inSlope: 0
+      outSlope: 0
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0
+      outWeight: 0
+    - serializedVersion: 3
+      time: 0.42403272
+      value: 0.9218121
+      inSlope: -0.8145886
+      outSlope: -0.8145886
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0.33333334
+      outWeight: 0.33333334
+    - serializedVersion: 3
+      time: 0.94966066
+      value: 0.103153475
+      inSlope: 0.056588955
+      outSlope: 0.056588955
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0.04041754
+      outWeight: 0.86556333
+    - serializedVersion: 3
+      time: 0.982033
+      value: 0.06931773
+      inSlope: -2.31742
+      outSlope: -2.31742
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0.55253196
+      outWeight: 0.33333334
+    - serializedVersion: 3
+      time: 1
+      value: 0
+      inSlope: 0
+      outSlope: 0
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0
+      outWeight: 0
+    m_PreInfinity: 2
+    m_PostInfinity: 2
+    m_RotationOrder: 4
+--- !u!114 &-6819612240915361169
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2641592558679900223}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 03d48e17888f4a1408ed482401aa0bd0, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  Strength: 0.25
+  Passes:
+  - HeightDelta: 20
+    NoiseScale: 0.015625
+  - HeightDelta: 10
+    NoiseScale: 0.03125
+  - HeightDelta: 5
+    NoiseScale: 0.0625
+  - HeightDelta: 2.5
+    NoiseScale: 0.125
+  - HeightDelta: 1.25
+    NoiseScale: 0.25
