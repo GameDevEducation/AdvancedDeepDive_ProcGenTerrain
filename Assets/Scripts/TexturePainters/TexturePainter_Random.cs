@@ -17,20 +17,20 @@ public class TexturePainter_Random : BaseTexturePainter
     [SerializeField] TextureConfig BaseTexture;
     [SerializeField] List<RandomPainterConfig> PaintingConfigs;
 
-    public override void Execute(ProcGenManager manager, int mapResolution, float[,] heightMap, Vector3 heightmapScale, float[,] slopeMap, float[,,] alphaMaps, int alphaMapResolution, byte[,] biomeMap = null, int biomeIndex = -1, BiomeConfigSO biome = null)
+    public override void Execute(ProcGenManager.GenerationData generationData, int biomeIndex = -1, BiomeConfigSO biome = null)
     {
-        int baseTextureLayer = manager.GetLayerForTexture(BaseTexture);
+        int baseTextureLayer = generationData.Manager.GetLayerForTexture(BaseTexture);
 
-        for (int y = 0; y < alphaMapResolution; ++y)
+        for (int y = 0; y < generationData.AlphaMapResolution; ++y)
         {
-            int heightMapY = Mathf.FloorToInt((float)y * (float)mapResolution / (float)alphaMapResolution);
+            int heightMapY = Mathf.FloorToInt((float)y * (float)generationData.MapResolution / (float)generationData.AlphaMapResolution);
 
-            for (int x = 0; x < alphaMapResolution; ++x)
+            for (int x = 0; x < generationData.AlphaMapResolution; ++x)
             {
-                int heightMapX = Mathf.FloorToInt((float)x * (float)mapResolution / (float)alphaMapResolution);
+                int heightMapX = Mathf.FloorToInt((float)x * (float)generationData.MapResolution / (float)generationData.AlphaMapResolution);
 
                 // skip if we have a biome and this is not our biome
-                if (biomeIndex >= 0 && biomeMap[heightMapX, heightMapY] != biomeIndex)
+                if (biomeIndex >= 0 && generationData.BiomeMap[heightMapX, heightMapY] != biomeIndex)
                     continue;
 
                 // perform the painting
@@ -40,12 +40,12 @@ public class TexturePainter_Random : BaseTexturePainter
                     float noiseValue = Mathf.PerlinNoise(x * config.NoiseScale, y * config.NoiseScale);
                     if (Random.Range(0f, 1f) >= noiseValue)
                     {
-                        int layer = manager.GetLayerForTexture(config.TextureToPaint);
-                        alphaMaps[x, y, layer] = Strength * config.IntensityModifier;
+                        int layer = generationData.Manager.GetLayerForTexture(config.TextureToPaint);
+                        generationData.AlphaMaps[x, y, layer] = Strength * config.IntensityModifier;
                     }
                 }
 
-                alphaMaps[x, y, baseTextureLayer] = Strength;
+                generationData.AlphaMaps[x, y, baseTextureLayer] = Strength;
             }
         }        
     }

@@ -7,23 +7,23 @@ public class TexturePainter_Slope : BaseTexturePainter
     [SerializeField] TextureConfig Texture;
     [SerializeField] AnimationCurve IntensityVsSlope;
 
-    public override void Execute(ProcGenManager manager, int mapResolution, float[,] heightMap, Vector3 heightmapScale, float[,] slopeMap, float[,,] alphaMaps, int alphaMapResolution, byte[,] biomeMap = null, int biomeIndex = -1, BiomeConfigSO biome = null)
+    public override void Execute(ProcGenManager.GenerationData generationData, int biomeIndex = -1, BiomeConfigSO biome = null)
     {
-        int textureLayer = manager.GetLayerForTexture(Texture);
+        int textureLayer = generationData.Manager.GetLayerForTexture(Texture);
 
-        for (int y = 0; y < alphaMapResolution; ++y)
+        for (int y = 0; y < generationData.AlphaMapResolution; ++y)
         {
-            int heightMapY = Mathf.FloorToInt((float)y * (float)mapResolution / (float)alphaMapResolution);
+            int heightMapY = Mathf.FloorToInt((float)y * (float)generationData.MapResolution / (float)generationData.AlphaMapResolution);
 
-            for (int x = 0; x < alphaMapResolution; ++x)
+            for (int x = 0; x < generationData.AlphaMapResolution; ++x)
             {
-                int heightMapX = Mathf.FloorToInt((float)x * (float)mapResolution / (float)alphaMapResolution);
+                int heightMapX = Mathf.FloorToInt((float)x * (float)generationData.MapResolution / (float)generationData.AlphaMapResolution);
 
                 // skip if we have a biome and this is not our biome
-                if (biomeIndex >= 0 && biomeMap[heightMapX, heightMapY] != biomeIndex)
+                if (biomeIndex >= 0 && generationData.BiomeMap[heightMapX, heightMapY] != biomeIndex)
                     continue;
 
-                alphaMaps[x, y, textureLayer] = Strength * IntensityVsSlope.Evaluate(1f - slopeMap[x, y]);
+                generationData.AlphaMaps[x, y, textureLayer] = Strength * IntensityVsSlope.Evaluate(1f - generationData.SlopeMap[x, y]);
             }
         }        
     }

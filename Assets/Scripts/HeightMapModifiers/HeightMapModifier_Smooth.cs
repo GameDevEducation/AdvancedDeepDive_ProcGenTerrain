@@ -11,19 +11,19 @@ public class HeightMapModifier_Smooth : BaseHeightMapModifier
     [SerializeField] int MinKernelSize = 2;
     [SerializeField] int MaxKernelSize = 7;
 
-    public override void Execute(ProcGenConfigSO globalConfig, int mapResolution, float[,] heightMap, Vector3 heightmapScale, byte[,] biomeMap = null, int biomeIndex = -1, BiomeConfigSO biome = null)
+    public override void Execute(ProcGenManager.GenerationData generationData, int biomeIndex = -1, BiomeConfigSO biome = null)
     {
-        if (biomeMap != null)
+        if (generationData.BiomeMap != null)
         {
             Debug.LogError("HeightMapModifier_Smooth is not supported as a per biome modifier [" + gameObject.name + "]");
             return;
         }
 
-        float[,] smoothedHeights = new float[mapResolution, mapResolution];
+        float[,] smoothedHeights = new float[generationData.MapResolution, generationData.MapResolution];
 
-        for (int y = 0; y < mapResolution; ++y)
+        for (int y = 0; y < generationData.MapResolution; ++y)
         {
-            for (int x = 0; x < mapResolution; ++x)
+            for (int x = 0; x < generationData.MapResolution; ++x)
             {
                 float heightSum = 0f;
                 int numValues = 0;
@@ -32,23 +32,23 @@ public class HeightMapModifier_Smooth : BaseHeightMapModifier
                 int kernelSize = SmoothingKernelSize;
                 if (UseAdaptiveKernel)
                 {
-                    kernelSize = Mathf.RoundToInt(Mathf.Lerp(MaxKernelSize, MinKernelSize, heightMap[x, y] / MaxHeightThreshold));
+                    kernelSize = Mathf.RoundToInt(Mathf.Lerp(MaxKernelSize, MinKernelSize, generationData.HeightMap[x, y] / MaxHeightThreshold));
                 }
 
                 // sum the neighbouring values
                 for (int yDelta = -kernelSize; yDelta <= kernelSize; ++yDelta)
                 {
                     int workingY = y + yDelta;
-                    if (workingY < 0 || workingY >= mapResolution)
+                    if (workingY < 0 || workingY >= generationData.MapResolution)
                         continue;
 
                     for (int xDelta = -kernelSize; xDelta <= kernelSize; ++xDelta)
                     {
                         int workingX = x + xDelta;
-                        if (workingX < 0 || workingX >= mapResolution)
+                        if (workingX < 0 || workingX >= generationData.MapResolution)
                             continue;
 
-                        heightSum += heightMap[workingX, workingY];
+                        heightSum += generationData.HeightMap[workingX, workingY];
                         ++numValues;
                     }                    
                 }
@@ -58,12 +58,12 @@ public class HeightMapModifier_Smooth : BaseHeightMapModifier
             }
         }
 
-        for (int y = 0; y < mapResolution; ++y)
+        for (int y = 0; y < generationData.MapResolution; ++y)
         {
-            for (int x = 0; x < mapResolution; ++x)
+            for (int x = 0; x < generationData.MapResolution; ++x)
             {
                 // blend based on strength
-                heightMap[x, y] = Mathf.Lerp(heightMap[x, y], smoothedHeights[x, y], Strength);
+                generationData.HeightMap[x, y] = Mathf.Lerp(generationData.HeightMap[x, y], smoothedHeights[x, y], Strength);
             }
         }        
     }

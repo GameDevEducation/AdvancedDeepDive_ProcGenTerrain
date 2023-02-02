@@ -11,15 +11,15 @@ public class ObjectPlacer_Perlin : BaseObjectPlacer
     [SerializeField] Vector2 NoiseScale = new Vector2(1f / 128f, 1f / 128f);
     [SerializeField] float NoiseThreshold = 0.5f;
 
-    List<Vector3> GetFilteredLocationsForBiome(ProcGenConfigSO globalConfig, int mapResolution, float[,] heightMap, Vector3 heightmapScale, byte[,] biomeMap, int biomeIndex)
+    List<Vector3> GetFilteredLocationsForBiome(ProcGenManager.GenerationData generationData, int biomeIndex)
     {
-        List<Vector3> locations = new List<Vector3>(mapResolution * mapResolution / 10);
+        List<Vector3> locations = new List<Vector3>(generationData.MapResolution * generationData.MapResolution / 10);
 
-        for (int y = 0; y < mapResolution; ++y)
+        for (int y = 0; y < generationData.MapResolution; ++y)
         {
-            for (int x = 0; x < mapResolution; ++x)
+            for (int x = 0; x < generationData.MapResolution; ++x)
             {
-                if (biomeMap[x, y] != biomeIndex)
+                if (generationData.BiomeMap[x, y] != biomeIndex)
                     continue;
 
                 // calculte the noise value
@@ -29,23 +29,22 @@ public class ObjectPlacer_Perlin : BaseObjectPlacer
                 if (noiseValue < NoiseThreshold)
                     continue;
 
-                float height = heightMap[x, y] * heightmapScale.y;
+                float height = generationData.HeightMap[x, y] * generationData.HeightmapScale.y;
 
-                locations.Add(new Vector3(y * heightmapScale.z, height, x * heightmapScale.x));
+                locations.Add(new Vector3(y * generationData.HeightmapScale.z, height, x * generationData.HeightmapScale.x));
             }
         }
 
         return locations;
     }
 
-    public override void Execute(ProcGenConfigSO globalConfig, Transform objectRoot, int mapResolution, float[,] heightMap, Vector3 heightmapScale, float[,] slopeMap, float[,,] alphaMaps, int alphaMapResolution, byte[,] biomeMap = null, int biomeIndex = -1, BiomeConfigSO biome = null)
+    public override void Execute(ProcGenManager.GenerationData generationData, int biomeIndex = -1, BiomeConfigSO biome = null)
     {
-        base.Execute(globalConfig, objectRoot, mapResolution, heightMap, heightmapScale, slopeMap, alphaMaps, alphaMapResolution,
-                     biomeMap, biomeIndex, biome);
+        base.Execute(generationData, biomeIndex, biome);
 
         // get potential spawn location
-        List<Vector3> candidateLocations = GetFilteredLocationsForBiome(globalConfig, mapResolution, heightMap, heightmapScale, biomeMap, biomeIndex);
+        List<Vector3> candidateLocations = GetFilteredLocationsForBiome(generationData, biomeIndex);
 
-        ExecuteSimpleSpawning(globalConfig, objectRoot, candidateLocations);
+        ExecuteSimpleSpawning(generationData.Config, generationData.ObjectRoot, candidateLocations);
     }
 }

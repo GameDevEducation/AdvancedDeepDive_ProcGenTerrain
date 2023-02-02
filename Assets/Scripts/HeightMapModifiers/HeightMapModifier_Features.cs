@@ -57,17 +57,17 @@ public class HeightMapModifier_Features : BaseHeightMapModifier
         }
     }
 
-    public override void Execute(ProcGenConfigSO globalConfig, int mapResolution, float[,] heightMap, Vector3 heightmapScale, byte[,] biomeMap = null, int biomeIndex = -1, BiomeConfigSO biome = null)
+    public override void Execute(ProcGenManager.GenerationData generationData, int biomeIndex = -1, BiomeConfigSO biome = null)
     {
         // traverse the features
-        foreach(var feature in Features)
+        foreach (var feature in Features)
         {
             for (int featureIndex = 0; featureIndex < feature.NumToSpawn; ++ featureIndex)
             {
-                int spawnX = Random.Range(feature.Radius, mapResolution - feature.Radius);
-                int spawnY = Random.Range(feature.Radius, mapResolution - feature.Radius);
+                int spawnX = Random.Range(feature.Radius, generationData.MapResolution - feature.Radius);
+                int spawnY = Random.Range(feature.Radius, generationData.MapResolution - feature.Radius);
 
-                SpawnFeature(feature, spawnX, spawnY, mapResolution, heightMap, heightmapScale);
+                SpawnFeature(feature, spawnX, spawnY, generationData.MapResolution, generationData.HeightMap, generationData.HeightmapScale);
             }
         }
     }

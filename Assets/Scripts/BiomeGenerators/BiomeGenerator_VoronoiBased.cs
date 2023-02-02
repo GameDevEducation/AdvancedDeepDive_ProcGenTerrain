@@ -8,9 +8,9 @@ public class BiomeGenerator_VoronoiBased : BaseBiomeMapGenerator
     [SerializeField] int ResampleDistance = 20;
 
     // Based on http://cuberite.xoft.cz/docs/Generator.html
-    public override void Execute(ProcGenConfigSO globalConfig, int mapResolution, byte[,] biomeMap, float[,] biomeStrengths)
+    public override void Execute(ProcGenManager.GenerationData generationData)
     {
-        int cellSize = Mathf.CeilToInt((float)mapResolution / NumCells);
+        int cellSize = Mathf.CeilToInt((float)generationData.MapResolution / NumCells);
 
         // generate our seed points
         Vector3Int[] biomeSeeds = new Vector3Int[NumCells * NumCells];
@@ -26,37 +26,37 @@ public class BiomeGenerator_VoronoiBased : BaseBiomeMapGenerator
 
                 biomeSeeds[cellIndex].x = centreX + Random.Range(-cellSize / 2, cellSize / 2);
                 biomeSeeds[cellIndex].y = centreY + Random.Range(-cellSize / 2, cellSize / 2);
-                biomeSeeds[cellIndex].z = Random.Range(0, globalConfig.NumBiomes);
+                biomeSeeds[cellIndex].z = Random.Range(0, generationData.Config.NumBiomes);
             }
         }
 
         // generate our base biome map
-        byte[,] baseBiomeMap = new byte[mapResolution, mapResolution];
-        for (int y = 0; y < mapResolution; y++) 
+        byte[,] baseBiomeMap = new byte[generationData.MapResolution, generationData.MapResolution];
+        for (int y = 0; y < generationData.MapResolution; y++) 
         {
-            for (int x = 0; x < mapResolution; x++)
+            for (int x = 0; x < generationData.MapResolution; x++)
             {
                 baseBiomeMap[x, y] = FindClosestBiome(x, y, NumCells, cellSize, biomeSeeds);
             }
         }
 
-        for (int y = 0; y < mapResolution; y++)
+        for (int y = 0; y < generationData.MapResolution; y++)
         {
-            for (int x = 0; x < mapResolution; x++)
+            for (int x = 0; x < generationData.MapResolution; x++)
             {
-                biomeMap[x, y] = ResampleBiomeMap(x, y, baseBiomeMap, mapResolution);
+                generationData.BiomeMap[x, y] = ResampleBiomeMap(x, y, baseBiomeMap, generationData.MapResolution);
             }
         }
 
 
 #if UNITY_EDITOR
         // save out the biome map
-        Texture2D biomeMapTexture = new Texture2D(mapResolution, mapResolution, TextureFormat.RGB24, false);
-        for (int y = 0; y < mapResolution; ++y)
+        Texture2D biomeMapTexture = new Texture2D(generationData.MapResolution, generationData.MapResolution, TextureFormat.RGB24, false);
+        for (int y = 0; y < generationData.MapResolution; ++y)
         {
-            for (int x = 0; x < mapResolution; ++x)
+            for (int x = 0; x < generationData.MapResolution; ++x)
             {
-                float hue = ((float)baseBiomeMap[x, y] / (float)globalConfig.NumBiomes);
+                float hue = ((float)baseBiomeMap[x, y] / (float)generationData.Config.NumBiomes);
 
                 biomeMapTexture.SetPixel(x, y, Color.HSVToRGB(hue, 0.75f, 0.75f));
             }
@@ -65,12 +65,12 @@ public class BiomeGenerator_VoronoiBased : BaseBiomeMapGenerator
 
         System.IO.File.WriteAllBytes("BiomeMap_Voronoi_Base.png", biomeMapTexture.EncodeToPNG());
 
-        biomeMapTexture = new Texture2D(mapResolution, mapResolution, TextureFormat.RGB24, false);
-        for (int y = 0; y < mapResolution; ++y)
+        biomeMapTexture = new Texture2D(generationData.MapResolution, generationData.MapResolution, TextureFormat.RGB24, false);
+        for (int y = 0; y < generationData.MapResolution; ++y)
         {
-            for (int x = 0; x < mapResolution; ++x)
+            for (int x = 0; x < generationData.MapResolution; ++x)
             {
-                float hue = ((float)biomeMap[x, y] / (float)globalConfig.NumBiomes);
+                float hue = ((float)generationData.BiomeMap[x, y] / (float)generationData.Config.NumBiomes);
 
                 biomeMapTexture.SetPixel(x, y, Color.HSVToRGB(hue, 0.75f, 0.75f));
             }

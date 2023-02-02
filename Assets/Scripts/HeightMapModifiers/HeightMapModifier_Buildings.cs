@@ -121,14 +121,14 @@ public class HeightMapModifier_Buildings : BaseHeightMapModifier
         return locations;
     }
 
-    public override void Execute(ProcGenConfigSO globalConfig, int mapResolution, float[,] heightMap, Vector3 heightmapScale, byte[,] biomeMap = null, int biomeIndex = -1, BiomeConfigSO biome = null)
+    public override void Execute(ProcGenManager.GenerationData generationData, int biomeIndex = -1, BiomeConfigSO biome = null)
     {
-        var buildingRoot = FindObjectOfType<ProcGenManager>().transform;
+        var buildingRoot = generationData.ObjectRoot;
 
         // traverse the buildings
         foreach(var building in Buildings)
         {
-            var spawnLocations = GetSpawnLocationsForBuilding(globalConfig, mapResolution, heightMap, heightmapScale, building);
+            var spawnLocations = GetSpawnLocationsForBuilding(generationData.Config, generationData.MapResolution, generationData.HeightMap, generationData.HeightmapScale, building);
 
             for (int buildingIndex = 0; buildingIndex < building.NumToSpawn && spawnLocations.Count > 0; ++ buildingIndex)
             {
@@ -136,7 +136,7 @@ public class HeightMapModifier_Buildings : BaseHeightMapModifier
                 var spawnPos = spawnLocations[spawnIndex];
                 spawnLocations.RemoveAt(spawnIndex);
 
-                SpawnBuilding(globalConfig, building, spawnPos.x, spawnPos.y, mapResolution, heightMap, heightmapScale, buildingRoot);
+                SpawnBuilding(generationData.Config, building, spawnPos.x, spawnPos.y, generationData.MapResolution, generationData.HeightMap, generationData.HeightmapScale, buildingRoot);
             }
         }
     }

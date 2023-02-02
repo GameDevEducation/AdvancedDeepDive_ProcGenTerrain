@@ -11,36 +11,36 @@ public class DetailPainter_Height : BaseDetailPainter
     [SerializeField] bool SuppressOtherDetails = false;
     [SerializeField] AnimationCurve SuppressionIntensity;
 
-    public override void Execute(ProcGenManager manager, int mapResolution, float[,] heightMap, Vector3 heightmapScale, float[,] slopeMap, float[,,] alphaMaps, int alphaMapResolution, List<int[,]> detailLayerMaps, int detailMapResolution, int maxDetailsPerPatch, byte[,] biomeMap = null, int biomeIndex = -1, BiomeConfigSO biome = null)
+    public override void Execute(ProcGenManager.GenerationData generationData, int biomeIndex = -1, BiomeConfigSO biome = null)
     {
-        int detailLayer = manager.GetDetailLayerForTerrainDetail(TerrainDetail);
+        int detailLayer = generationData.Manager.GetDetailLayerForTerrainDetail(TerrainDetail);
 
-        float heightMapStart = StartHeight / heightmapScale.y;
-        float heightMapEnd = EndHeight / heightmapScale.y;
+        float heightMapStart = StartHeight / generationData.HeightmapScale.y;
+        float heightMapEnd = EndHeight / generationData.HeightmapScale.y;
         float heightMapRangeInv = 1f / (heightMapEnd - heightMapStart);
 
-        int numDetailLayers = detailLayerMaps.Count;
+        int numDetailLayers = generationData.DetailLayerMaps.Count;
 
-        for (int y = 0; y < detailMapResolution; ++y)
+        for (int y = 0; y < generationData.DetailMapResolution; ++y)
         {
-            int heightMapY = Mathf.FloorToInt((float)y * (float)mapResolution / (float)detailMapResolution);
+            int heightMapY = Mathf.FloorToInt((float)y * (float)generationData.MapResolution / (float)generationData.DetailMapResolution);
 
-            for (int x = 0; x < detailMapResolution; ++x)
+            for (int x = 0; x < generationData.DetailMapResolution; ++x)
             {
-                int heightMapX = Mathf.FloorToInt((float)x * (float)mapResolution / (float)detailMapResolution);
+                int heightMapX = Mathf.FloorToInt((float)x * (float)generationData.MapResolution / (float)generationData.DetailMapResolution);
 
                 // skip if we have a biome and this is not our biome
-                if (biomeIndex >= 0 && biomeMap[heightMapX, heightMapY] != biomeIndex)
+                if (biomeIndex >= 0 && generationData.BiomeMap[heightMapX, heightMapY] != biomeIndex)
                     continue;
 
-                float height = heightMap[heightMapX, heightMapY];
+                float height = generationData.HeightMap[heightMapX, heightMapY];
 
                 // outside of height range
                 if (height < heightMapStart || height > heightMapEnd)
                     continue;
 
                 float heightPercentage = (height - heightMapStart) * heightMapRangeInv;
-                detailLayerMaps[detailLayer][x, y] = Mathf.FloorToInt(Strength * Intensity.Evaluate(heightPercentage) * maxDetailsPerPatch);
+                generationData.DetailLayerMaps[detailLayer][x, y] = Mathf.FloorToInt(Strength * Intensity.Evaluate(heightPercentage) * generationData.MaxDetailsPerPatch);
 
                 // if suppression of other details is on then update the other layers
                 if (SuppressOtherDetails)
@@ -53,7 +53,7 @@ public class DetailPainter_Height : BaseDetailPainter
                         if (layerIndex == detailLayer)
                             continue;
 
-                        detailLayerMaps[detailLayer][x, y] = Mathf.FloorToInt(detailLayerMaps[detailLayer][x, y] * suppression);
+                        generationData.DetailLayerMaps[detailLayer][x, y] = Mathf.FloorToInt(generationData.DetailLayerMaps[detailLayer][x, y] * suppression);
                     }
                 }
             }

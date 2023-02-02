@@ -26,41 +26,67 @@ public enum EGenerationStage
 
 public class ProcGenManager : MonoBehaviour
 {
+    public class GenerationData
+    {
+        public ProcGenManager Manager;
+        public ProcGenConfigSO Config;
+        public Transform ObjectRoot;
+
+        public int MapResolution;
+        public float[,] HeightMap;
+        public Vector3 HeightmapScale;
+        public float[,,] AlphaMaps;
+        public int AlphaMapResolution;
+
+        public byte[,] BiomeMap;
+        public float[,] BiomeStrengths;
+
+        public float[,] SlopeMap;
+
+        public Dictionary<TextureConfig, int> BiomeTextureToTerrainLayerIndex = new Dictionary<TextureConfig, int>();
+        public Dictionary<TerrainDetailConfig, int> BiomeTerrainDetailToDetailLayerIndex = new Dictionary<TerrainDetailConfig, int>();
+
+        public List<int[,]> DetailLayerMaps;
+        public int DetailMapResolution;
+        public int MaxDetailsPerPatch;
+    }
+
     [SerializeField] ProcGenConfigSO Config;
     [SerializeField] Terrain TargetTerrain;
 
     [Header("Debugging")]
     [SerializeField] bool DEBUG_TurnOffObjectPlacers = false;
 
-    Dictionary<TextureConfig, int> BiomeTextureToTerrainLayerIndex = new Dictionary<TextureConfig, int>();
-    Dictionary<TerrainDetailConfig, int> BiomeTerrainDetailToDetailLayerIndex = new Dictionary<TerrainDetailConfig, int>();
-
-    byte[,] BiomeMap;
-    float[,] BiomeStrengths;
-
-    float[,] SlopeMap;
+    GenerationData Data;
 
     public IEnumerator AsyncRegenerateWorld(System.Action<EGenerationStage, string> reportStatusFn = null)
     {
+        Data = new GenerationData();
+
+        // cache the core info
+        Data.Manager = this;
+        Data.Config = Config;
+        Data.ObjectRoot = TargetTerrain.transform;
+
         // cache the map resolution
-        int mapResolution = TargetTerrain.terrainData.heightmapResolution;
-        int alphaMapResolution = TargetTerrain.terrainData.alphamapResolution;
-        int detailMapResolution = TargetTerrain.terrainData.detailResolution;
-        int maxDetailsPerPatch = TargetTerrain.terrainData.detailResolutionPerPatch;
+        Data.MapResolution = TargetTerrain.terrainData.heightmapResolution;
+        Data.AlphaMapResolution = TargetTerrain.terrainData.alphamapResolution;
+        Data.DetailMapResolution = TargetTerrain.terrainData.detailResolution;
+        Data.MaxDetailsPerPatch = TargetTerrain.terrainData.detailResolutionPerPatch;
 
         if (reportStatusFn != null) reportStatusFn.Invoke(EGenerationStage.Beginning, "Beginning Generation");
         yield return new WaitForSeconds(1f);
 
         // clear out any previously spawned objects
-        for (int childIndex = transform.childCount - 1; childIndex >= 0; --childIndex)
+        for (int childIndex = Data.ObjectRoot.childCount - 1; childIndex >= 0; --childIndex)
         {
 #if UNITY_EDITOR
             if (Application.isPlaying)
-                Destroy(transform.GetChild(childIndex).gameObject);
+                Destroy(Data.ObjectRoot.GetChild(childIndex).gameObject);
             else
-                Undo.DestroyObjectImmediate(transform.GetChild(childIndex).gameObject);
+                Undo.DestroyObjectImmediate(Data.ObjectRoot.GetChild(childIndex).gameObject);
 #else
-            Destroy(transform.GetChild(childIndex).gameObject);
+            Destroy(Data.ObjectRoot.GetChild(childIndex).gameObject);
 #endif // UNITY_EDITOR
         }
 
@@ -80,38 +106,38 @@ public class ProcGenManager : MonoBehaviour
         yield return new WaitForSeconds(1f);
 
         // generate the biome map
-        Perform_BiomeGeneration(mapResolution);
+        Perform_BiomeGeneration();
 
         if (reportStatusFn != null) reportStatusFn.Invoke(EGenerationStage.HeightMapGeneration, "Modifying heights");
         yield return new WaitForSeconds(1f);
 
         // update the terrain heights
-        Perform_HeightMapModification(mapResolution, alphaMapResolution);
+        Perform_HeightMapModification();
 
         if (reportStatusFn != null) reportStatusFn.Invoke(EGenerationStage.TerrainPainting, "Painting the terrain");
         yield return new WaitForSeconds(1f);
 
         // paint the terrain
-        Perform_TerrainPainting(mapResolution, alphaMapResolution);
+        Perform_TerrainPainting();
 
         if (reportStatusFn != null) reportStatusFn.Invoke(EGenerationStage.ObjectPlacement, "Placing objects");
         yield return new WaitForSeconds(1f);
 
         // place the objects
-        Perform_ObjectPlacement(mapResolution, alphaMapResolution);
+        Perform_ObjectPlacement();
 
         if (reportStatusFn != null) reportStatusFn.Invoke(EGenerationStage.DetailPainting, "Placing objects");
         yield return new WaitForSeconds(1f);
 
         // paint the details
-        Perform_DetailPainting(mapResolution, alphaMapResolution, detailMapResolution, maxDetailsPerPatch);
+        Perform_DetailPainting();
 
         if (reportStatusFn != null) reportStatusFn.Invoke(EGenerationStage.Complete, "Generation complete");
     }
 
     void Perform_GenerateTextureMapping()
     {
-        BiomeTextureToTerrainLayerIndex.Clear();
+        Data.BiomeTextureToTerrainLayerIndex.Clear();
 
         // build up list of all textures
         List<TextureConfig> allTextures = new List<TextureConfig>();
@@ -147,14 +173,14 @@ public class ProcGenManager : MonoBehaviour
         int layerIndex = 0;
         foreach(var textureConfig in allTextures)
         {
-            BiomeTextureToTerrainLayerIndex[textureConfig] = layerIndex;
+            Data.BiomeTextureToTerrainLayerIndex[textureConfig] = layerIndex;
             ++layerIndex;
         }
     }
 
     void Perform_GenerateTerrainDetailMapping()
     {
-        BiomeTerrainDetailToDetailLayerIndex.Clear();
+        Data.BiomeTerrainDetailToDetailLayerIndex.Clear();
 
         // build up list of all terrain details
         List<TerrainDetailConfig> allTerrainDetails = new List<TerrainDetailConfig>();
@@ -190,7 +216,7 @@ public class ProcGenManager : MonoBehaviour
         int layerIndex = 0;
         foreach (var terrainDetail in allTerrainDetails)
         {
-            BiomeTerrainDetailToDetailLayerIndex[terrainDetail] = layerIndex;
+            Data.BiomeTerrainDetailToDetailLayerIndex[terrainDetail] = layerIndex;
             ++layerIndex;
         }
     }
@@ -243,7 +269,7 @@ public class ProcGenManager : MonoBehaviour
         Perform_GenerateTextureMapping();
 
         // generate all of the layers
-        int numLayers = BiomeTextureToTerrainLayerIndex.Count;
+        int numLayers = Data.BiomeTextureToTerrainLayerIndex.Count;
         List<TerrainLayer> newLayers = new List<TerrainLayer>(numLayers);
         
         // preallocate the layers
@@ -253,7 +279,7 @@ public class ProcGenManager : MonoBehaviour
         }
 
         // iterate over the texture map
-        foreach(var textureMappingEntry in BiomeTextureToTerrainLayerIndex)
+        foreach(var textureMappingEntry in Data.BiomeTextureToTerrainLayerIndex)
         {
             var textureConfig = textureMappingEntry.Key;
             var textureLayerIndex = textureMappingEntry.Value;
@@ -277,8 +303,8 @@ public class ProcGenManager : MonoBehaviour
         Perform_GenerateTerrainDetailMapping();
 
         // build the list of detail prototypes
-        var detailPrototypes = new DetailPrototype[BiomeTerrainDetailToDetailLayerIndex.Count];
-        foreach(var kvp in BiomeTerrainDetailToDetailLayerIndex)
+        var detailPrototypes = new DetailPrototype[Data.BiomeTerrainDetailToDetailLayerIndex.Count];
+        foreach(var kvp in Data.BiomeTerrainDetailToDetailLayerIndex)
         {
             TerrainDetailConfig detailData = kvp.Key;
             int layerIndex = kvp.Value;
@@ -329,11 +355,11 @@ public class ProcGenManager : MonoBehaviour
     }
 #endif // UNITY_EDITOR
 
-    void Perform_BiomeGeneration(int mapResolution)
+    void Perform_BiomeGeneration()
     {
         // allocate the biome map and strength map
-        BiomeMap = new byte[mapResolution, mapResolution];
-        BiomeStrengths = new float[mapResolution, mapResolution];
+        Data.BiomeMap = new byte[Data.MapResolution, Data.MapResolution];
+        Data.BiomeStrengths = new float[Data.MapResolution, Data.MapResolution];
 
         // execute any initial height modifiers
         if (Config.BiomeGenerators != null)
@@ -342,14 +368,14 @@ public class ProcGenManager : MonoBehaviour
 
             foreach (var generator in generators)
             {
-                generator.Execute(Config, mapResolution, BiomeMap, BiomeStrengths);
+                generator.Execute(Data);
             }
         }
     }
 
-    void Perform_HeightMapModification(int mapResolution, int alphaMapResolution)
+    void Perform_HeightMapModification()
     {
-        float[,] heightMap = TargetTerrain.terrainData.GetHeights(0, 0, mapResolution, mapResolution);
+        Data.HeightMap = TargetTerrain.terrainData.GetHeights(0, 0, Data.MapResolution, Data.MapResolution);
 
         // execute any initial height modifiers
         if (Config.InitialHeightModifier != null)
@@ -358,7 +384,7 @@ public class ProcGenManager : MonoBehaviour
 
             foreach(var modifier in modifiers)
             {
-                modifier.Execute(Config, mapResolution, heightMap, TargetTerrain.terrainData.heightmapScale);
+                modifier.Execute(Data);
             }
         }
 
@@ -373,7 +399,7 @@ public class ProcGenManager : MonoBehaviour
 
             foreach(var modifier in modifiers)
             {
-                modifier.Execute(Config, mapResolution, heightMap, TargetTerrain.terrainData.heightmapScale, BiomeMap, biomeIndex, biome);
+                modifier.Execute(Data, biomeIndex, biome);
             }
         }
 
@@ -384,46 +410,45 @@ public class ProcGenManager : MonoBehaviour
         
             foreach(var modifier in modifiers)
             {
-                modifier.Execute(Config, mapResolution, heightMap, TargetTerrain.terrainData.heightmapScale);
+                modifier.Execute(Data);
             }
         }     
 
-        TargetTerrain.terrainData.SetHeights(0, 0, heightMap);
+        TargetTerrain.terrainData.SetHeights(0, 0, Data.HeightMap);
 
         // generate the slope map
-        SlopeMap = new float[alphaMapResolution, alphaMapResolution];
-        for (int y = 0; y < alphaMapResolution; ++y)
+        Data.SlopeMap = new float[Data.AlphaMapResolution, Data.AlphaMapResolution];
+        for (int y = 0; y < Data.AlphaMapResolution; ++y)
         {
-            for (int x = 0; x < alphaMapResolution; ++x)
+            for (int x = 0; x < Data.AlphaMapResolution; ++x)
             {
-                SlopeMap[x, y] = TargetTerrain.terrainData.GetInterpolatedNormal((float) x / alphaMapResolution, (float) y / alphaMapResolution).y;
+                Data.SlopeMap[x, y] = TargetTerrain.terrainData.GetInterpolatedNormal((float) x / Data.AlphaMapResolution, (float) y / Data.AlphaMapResolution).y;
             }
         }          
     }
 
     public int GetLayerForTexture(TextureConfig textureConfig)
     {
-        return BiomeTextureToTerrainLayerIndex[textureConfig];
+        return Data.BiomeTextureToTerrainLayerIndex[textureConfig];
     }
 
     public int GetDetailLayerForTerrainDetail(TerrainDetailConfig detailConfig)
     {
-        return BiomeTerrainDetailToDetailLayerIndex[detailConfig];
+        return Data.BiomeTerrainDetailToDetailLayerIndex[detailConfig];
     }
 
-    void Perform_TerrainPainting(int mapResolution, int alphaMapResolution)
+    void Perform_TerrainPainting()
     {
-        float[,] heightMap = TargetTerrain.terrainData.GetHeights(0, 0, mapResolution, mapResolution);
-        float[,,] alphaMaps = TargetTerrain.terrainData.GetAlphamaps(0, 0, alphaMapResolution, alphaMapResolution);
+        Data.AlphaMaps = TargetTerrain.terrainData.GetAlphamaps(0, 0, Data.AlphaMapResolution, Data.AlphaMapResolution);
 
         // zero out all layers
-        for (int y = 0; y < alphaMapResolution; ++y)
+        for (int y = 0; y < Data.AlphaMapResolution; ++y)
         {
-            for (int x = 0; x < alphaMapResolution; ++x)
+            for (int x = 0; x < Data.AlphaMapResolution; ++x)
             {
                 for (int layerIndex = 0; layerIndex < TargetTerrain.terrainData.alphamapLayers; ++layerIndex)
                 {
-                    alphaMaps[x, y, layerIndex] = 0;
+                    Data.AlphaMaps[x, y, layerIndex] = 0;
                 }
             }
         }   
@@ -439,7 +464,7 @@ public class ProcGenManager : MonoBehaviour
 
             foreach(var modifier in modifiers)
             {
-                modifier.Execute(this, mapResolution, heightMap, TargetTerrain.terrainData.heightmapScale, SlopeMap, alphaMaps, alphaMapResolution, BiomeMap, biomeIndex, biome);
+                modifier.Execute(Data, biomeIndex, biome);
             }
         }        
 
@@ -450,20 +475,17 @@ public class ProcGenManager : MonoBehaviour
 
             foreach(var modifier in modifiers)
             {
-                modifier.Execute(this, mapResolution, heightMap, TargetTerrain.terrainData.heightmapScale, SlopeMap, alphaMaps, alphaMapResolution);
+                modifier.Execute(Data);
             }    
         }
 
-        TargetTerrain.terrainData.SetAlphamaps(0, 0, alphaMaps);
+        TargetTerrain.terrainData.SetAlphamaps(0, 0, Data.AlphaMaps);
     }
 
-    void Perform_ObjectPlacement(int mapResolution, int alphaMapResolution)
+    void Perform_ObjectPlacement()
     {
         if (DEBUG_TurnOffObjectPlacers)
             return;
-
-        float[,] heightMap = TargetTerrain.terrainData.GetHeights(0, 0, mapResolution, mapResolution);
-        float[,,] alphaMaps = TargetTerrain.terrainData.GetAlphamaps(0, 0, alphaMapResolution, alphaMapResolution);
 
         // run object placement for each biome
         for (int biomeIndex = 0; biomeIndex < Config.NumBiomes; ++biomeIndex)
@@ -476,22 +498,19 @@ public class ProcGenManager : MonoBehaviour
 
             foreach(var modifier in modifiers)
             {
-                modifier.Execute(Config, transform, mapResolution, heightMap, TargetTerrain.terrainData.heightmapScale, SlopeMap, alphaMaps, alphaMapResolution, BiomeMap, biomeIndex, biome);
+                modifier.Execute(Data, biomeIndex, biome);
             }
         }        
     }
 
-    void Perform_DetailPainting(int mapResolution, int alphaMapResolution, int detailMapResolution, int maxDetailsPerPatch)
+    void Perform_DetailPainting()
     {
-        float[,] heightMap = TargetTerrain.terrainData.GetHeights(0, 0, mapResolution, mapResolution);
-        float[,,] alphaMaps = TargetTerrain.terrainData.GetAlphamaps(0, 0, alphaMapResolution, alphaMapResolution);
-
         // create a new empty set of layers
         int numDetailLayers = TargetTerrain.terrainData.detailPrototypes.Length;
-        List<int[,]> detailLayerMaps = new List<int[,]>(numDetailLayers);
+        Data.DetailLayerMaps = new List<int[,]>(numDetailLayers);
         for (int layerIndex = 0; layerIndex < numDetailLayers; ++layerIndex)
         {
-            detailLayerMaps.Add(new int[detailMapResolution, detailMapResolution]);
+            Data.DetailLayerMaps.Add(new int[Data.DetailMapResolution, Data.DetailMapResolution]);
         }
 
         // run terrain detail painting for each biome
@@ -505,7 +524,7 @@ public class ProcGenManager : MonoBehaviour
 
             foreach (var modifier in modifiers)
             {
-                modifier.Execute(this, mapResolution, heightMap, TargetTerrain.terrainData.heightmapScale, SlopeMap, alphaMaps, alphaMapResolution, detailLayerMaps, detailMapResolution, maxDetailsPerPatch, BiomeMap, biomeIndex, biome);
+                modifier.Execute(Data, biomeIndex, biome);
             }
         }
 
@@ -516,14 +535,14 @@ public class ProcGenManager : MonoBehaviour
 
             foreach (var modifier in modifiers)
             {
-                modifier.Execute(this, mapResolution, heightMap, TargetTerrain.terrainData.heightmapScale, SlopeMap, alphaMaps, alphaMapResolution, detailLayerMaps, detailMapResolution, maxDetailsPerPatch);
+                modifier.Execute(Data);
             }
         }
 
         // apply the detail layers
         for (int layerIndex = 0; layerIndex < numDetailLayers; ++layerIndex)
         {
-            TargetTerrain.terrainData.SetDetailLayer(0, 0, layerIndex, detailLayerMaps[layerIndex]);
+            TargetTerrain.terrainData.SetDetailLayer(0, 0, layerIndex, Data.DetailLayerMaps[layerIndex]);
         }
     }
 }

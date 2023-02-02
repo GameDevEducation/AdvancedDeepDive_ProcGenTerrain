@@ -4,7 +4,7 @@ using UnityEngine;
 
 public class BaseBiomeMapGenerator : MonoBehaviour
 {
-    public virtual void Execute(ProcGenConfigSO globalConfig, int mapResolution, byte[,] biomeMap, float[,] biomeStrengths)
+    public virtual void Execute(ProcGenManager.GenerationData generationData)
     {
         Debug.LogError("No implementation of Execute function for " + gameObject.name);
     }

@@ -6,21 +6,21 @@ public class HeightMapModifier_Random : BaseHeightMapModifier
 {
     [SerializeField] float HeightDelta;
 
-    public override void Execute(ProcGenConfigSO globalConfig, int mapResolution, float[,] heightMap, Vector3 heightmapScale, byte[,] biomeMap = null, int biomeIndex = -1, BiomeConfigSO biome = null)
+    public override void Execute(ProcGenManager.GenerationData generationData, int biomeIndex = -1, BiomeConfigSO biome = null)
     {
-        for (int y = 0; y < mapResolution; ++y)
+        for (int y = 0; y < generationData.MapResolution; ++y)
         {
-            for (int x = 0; x < mapResolution; ++x)
+            for (int x = 0; x < generationData.MapResolution; ++x)
             {
                 // skip if we have a biome and this is not our biome
-                if (biomeIndex >= 0 && biomeMap[x, y] != biomeIndex)
+                if (biomeIndex >= 0 && generationData.BiomeMap[x, y] != biomeIndex)
                     continue;
                 
                 // calculate the new height
-                float newHeight = heightMap[x, y] + (Random.Range(-HeightDelta, HeightDelta) / heightmapScale.y);
+                float newHeight = generationData.HeightMap[x, y] + (Random.Range(-HeightDelta, HeightDelta) / generationData.HeightmapScale.y);
 
                 // blend based on strength
-                heightMap[x, y] = Mathf.Lerp(heightMap[x, y], newHeight, Strength);
+                generationData.HeightMap[x, y] = Mathf.Lerp(generationData.HeightMap[x, y], newHeight, Strength);
             }
         }
     }        

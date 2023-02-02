@@ -14,11 +14,11 @@ public class HeightMapModifier_Islands : BaseHeightMapModifier
     [SerializeField] float NoiseHeightDelta = 5f;
     [SerializeField] AnimationCurve IslandShapeCurve;
 
-    public override void Execute(ProcGenConfigSO globalConfig, int mapResolution, float[,] heightMap, Vector3 heightmapScale, byte[,] biomeMap = null, int biomeIndex = -1, BiomeConfigSO biome = null)
+    public override void Execute(ProcGenManager.GenerationData generationData, int biomeIndex = -1, BiomeConfigSO biome = null)
     {
         for (int island = 0; island < NumIslands; ++island)
         {
-            PlaceIsland(globalConfig, mapResolution, heightMap, heightmapScale, biomeMap, biomeIndex, biome);
+            PlaceIsland(generationData.Config, generationData.MapResolution, generationData.HeightMap, generationData.HeightmapScale, generationData.BiomeMap, biomeIndex, biome);
         }
     }
 

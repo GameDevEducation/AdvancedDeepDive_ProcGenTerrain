@@ -30,27 +30,27 @@ public class BaseObjectPlacer : MonoBehaviour
     [SerializeField] protected int MaxInvalidLocationSkips = 10;
     [SerializeField] protected float MaxPositionJitter = 0.15f;
 
-    protected List<Vector3> GetAllLocationsForBiome(ProcGenConfigSO globalConfig, int mapResolution, float[,] heightMap, Vector3 heightmapScale, byte[,] biomeMap, int biomeIndex)
+    protected List<Vector3> GetAllLocationsForBiome(ProcGenManager.GenerationData generationData, int biomeIndex)
     {
-        List<Vector3> locations = new List<Vector3>(mapResolution * mapResolution / 10);
+        List<Vector3> locations = new List<Vector3>(generationData.MapResolution * generationData.MapResolution / 10);
 
-        for (int y = 0; y < mapResolution; ++y)
+        for (int y = 0; y < generationData.MapResolution; ++y)
         {
-            for (int x = 0; x < mapResolution; ++x)
+            for (int x = 0; x < generationData.MapResolution; ++x)
             {
-                if (biomeMap[x, y] != biomeIndex)
+                if (generationData.BiomeMap[x, y] != biomeIndex)
                     continue;
 
-                float height = heightMap[x, y] * heightmapScale.y;
+                float height = generationData.HeightMap[x, y] * generationData.HeightmapScale.y;
 
-                locations.Add(new Vector3(y * heightmapScale.z, height, x * heightmapScale.x));
+                locations.Add(new Vector3(y * generationData.HeightmapScale.z, height, x * generationData.HeightmapScale.x));
             }
         }
 
         return locations;
     }
 
-    public virtual void Execute(ProcGenConfigSO globalConfig, Transform objectRoot, int mapResolution, float[,] heightMap, Vector3 heightmapScale, float[,] slopeMap, float[,,] alphaMaps, int alphaMapResolution, byte[,] biomeMap = null, int biomeIndex = -1, BiomeConfigSO biome = null)
+    public virtual void Execute(ProcGenManager.GenerationData generationData, int biomeIndex = -1, BiomeConfigSO biome = null)
     {
         // validate the configs
         foreach(var config in Objects)

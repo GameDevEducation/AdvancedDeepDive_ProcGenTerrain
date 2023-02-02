@@ -11,36 +11,36 @@ public class TexturePainter_Height : BaseTexturePainter
     [SerializeField] bool SuppressOtherTextures = false;
     [SerializeField] AnimationCurve SuppressionIntensity;
 
-    public override void Execute(ProcGenManager manager, int mapResolution, float[,] heightMap, Vector3 heightmapScale, float[,] slopeMap, float[,,] alphaMaps, int alphaMapResolution, byte[,] biomeMap = null, int biomeIndex = -1, BiomeConfigSO biome = null)
+    public override void Execute(ProcGenManager.GenerationData generationData, int biomeIndex = -1, BiomeConfigSO biome = null)
     {
-        int textureLayer = manager.GetLayerForTexture(Texture);
+        int textureLayer = generationData.Manager.GetLayerForTexture(Texture);
 
-        float heightMapStart = StartHeight / heightmapScale.y;
-        float heightMapEnd = EndHeight / heightmapScale.y;
+        float heightMapStart = StartHeight / generationData.HeightmapScale.y;
+        float heightMapEnd = EndHeight / generationData.HeightmapScale.y;
         float heightMapRangeInv = 1f / (heightMapEnd - heightMapStart);
 
-        int numAlphaMaps = alphaMaps.GetLength(2);
+        int numAlphaMaps = generationData.AlphaMaps.GetLength(2);
 
-        for (int y = 0; y < alphaMapResolution; ++y)
+        for (int y = 0; y < generationData.AlphaMapResolution; ++y)
         {
-            int heightMapY = Mathf.FloorToInt((float)y * (float)mapResolution / (float)alphaMapResolution);
+            int heightMapY = Mathf.FloorToInt((float)y * (float)generationData.MapResolution / (float)generationData.AlphaMapResolution);
 
-            for (int x = 0; x < alphaMapResolution; ++x)
+            for (int x = 0; x < generationData.AlphaMapResolution; ++x)
             {
-                int heightMapX = Mathf.FloorToInt((float)x * (float)mapResolution / (float)alphaMapResolution);
+                int heightMapX = Mathf.FloorToInt((float)x * (float)generationData.MapResolution / (float)generationData.AlphaMapResolution);
 
                 // skip if we have a biome and this is not our biome
-                if (biomeIndex >= 0 && biomeMap[heightMapX, heightMapY] != biomeIndex)
+                if (biomeIndex >= 0 && generationData.BiomeMap[heightMapX, heightMapY] != biomeIndex)
                     continue;
 
-                float height = heightMap[heightMapX, heightMapY];
+                float height = generationData.HeightMap[heightMapX, heightMapY];
 
                 // outside of height range
                 if (height < heightMapStart || height > heightMapEnd)
                     continue;
 
                 float heightPercentage = (height - heightMapStart) * heightMapRangeInv;
-                alphaMaps[x, y, textureLayer] = Strength * Intensity.Evaluate(heightPercentage);
+                generationData.AlphaMaps[x, y, textureLayer] = Strength * Intensity.Evaluate(heightPercentage);
 
                 // if suppression of other textures is on then update the other layers
                 if (SuppressOtherTextures)
@@ -53,7 +53,7 @@ public class TexturePainter_Height : BaseTexturePainter
                         if (layerIndex == textureLayer)
                             continue;
 
-                        alphaMaps[x, y, layerIndex] *= suppression;
+                        generationData.AlphaMaps[x, y, layerIndex] *= suppression;
                     }
                 }
             }

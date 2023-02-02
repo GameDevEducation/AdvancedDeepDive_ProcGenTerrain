@@ -18,11 +18,11 @@ public class BiomeGenerator_OozeBased : BaseBiomeMapGenerator
     byte[,] BiomeMap_LowResolution;
     float[,] BiomeStrengths_LowResolution;
 
-    public override void Execute(ProcGenConfigSO globalConfig, int mapResolution, byte[,] biomeMap, float[,] biomeStrengths)
+    public override void Execute(ProcGenManager.GenerationData generationData)
     {
-        Perform_BiomeGeneration_LowResolution(globalConfig, (int)BiomeMapResolution);
+        Perform_BiomeGeneration_LowResolution(generationData.Config, (int)BiomeMapResolution);
 
-        Perform_BiomeGeneration_HighResolution(globalConfig, (int)BiomeMapResolution, mapResolution, biomeMap, biomeStrengths);
+        Perform_BiomeGeneration_HighResolution(generationData.Config, (int)BiomeMapResolution, generationData.MapResolution, generationData.BiomeMap, generationData.BiomeStrengths);
     }
 
     void Perform_BiomeGeneration_LowResolution(ProcGenConfigSO config, int mapResolution)
