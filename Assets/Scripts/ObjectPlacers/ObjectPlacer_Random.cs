@@ -11,6 +11,6 @@ public class ObjectPlacer_Random : BaseObjectPlacer
         // get potential spawn location
         List<Vector3> candidateLocations = GetAllLocationsForBiome(generationData, biomeIndex);
 
-        ExecuteSimpleSpawning(generationData.Config, generationData.ObjectRoot, candidateLocations);
+        ExecuteSimpleSpawning(generationData, generationData.ObjectRoot, candidateLocations);
     }
 }

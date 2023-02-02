@@ -64,8 +64,8 @@ public class HeightMapModifier_Features : BaseHeightMapModifier
         {
             for (int featureIndex = 0; featureIndex < feature.NumToSpawn; ++ featureIndex)
             {
-                int spawnX = Random.Range(feature.Radius, generationData.MapResolution - feature.Radius);
-                int spawnY = Random.Range(feature.Radius, generationData.MapResolution - feature.Radius);
+                int spawnX = generationData.Random(feature.Radius, generationData.MapResolution - feature.Radius);
+                int spawnY = generationData.Random(feature.Radius, generationData.MapResolution - feature.Radius);
 
                 SpawnFeature(feature, spawnX, spawnY, generationData.MapResolution, generationData.HeightMap, generationData.HeightmapScale);
             }

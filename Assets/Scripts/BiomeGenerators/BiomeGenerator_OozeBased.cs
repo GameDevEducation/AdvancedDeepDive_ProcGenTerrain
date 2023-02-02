@@ -1,6 +1,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using static ProcGenManager;
 
 public class BiomeGenerator_OozeBased : BaseBiomeMapGenerator
 {
@@ -20,12 +21,12 @@ public class BiomeGenerator_OozeBased : BaseBiomeMapGenerator
 
     public override void Execute(ProcGenManager.GenerationData generationData)
     {
-        Perform_BiomeGeneration_LowResolution(generationData.Config, (int)BiomeMapResolution);
+        Perform_BiomeGeneration_LowResolution(generationData, (int)BiomeMapResolution);
 
         Perform_BiomeGeneration_HighResolution(generationData.Config, (int)BiomeMapResolution, generationData.MapResolution, generationData.BiomeMap, generationData.BiomeStrengths);
     }
 
-    void Perform_BiomeGeneration_LowResolution(ProcGenConfigSO config, int mapResolution)
+    void Perform_BiomeGeneration_LowResolution(ProcGenManager.GenerationData generationData, int mapResolution)
     {
         // allocate the biome map and strength map
         BiomeMap_LowResolution = new byte[mapResolution, mapResolution];
@@ -36,10 +37,10 @@ public class BiomeGenerator_OozeBased : BaseBiomeMapGenerator
         List<byte> biomesToSpawn = new List<byte>(numSeedPoints);
 
         // populate the biomes to spawn based on weightings
-        float totalBiomeWeighting = config.TotalWeighting;
-        for (int biomeIndex = 0; biomeIndex < config.NumBiomes; ++biomeIndex)
+        float totalBiomeWeighting = generationData.Config.TotalWeighting;
+        for (int biomeIndex = 0; biomeIndex < generationData.Config.NumBiomes; ++biomeIndex)
         {
-            int numEntries = Mathf.RoundToInt(numSeedPoints * config.Biomes[biomeIndex].Weighting / totalBiomeWeighting);
+            int numEntries = Mathf.RoundToInt(numSeedPoints * generationData.Config.Biomes[biomeIndex].Weighting / totalBiomeWeighting);
 
             for (int entryIndex = 0; entryIndex < numEntries; ++entryIndex)
             {
@@ -51,7 +52,7 @@ public class BiomeGenerator_OozeBased : BaseBiomeMapGenerator
         while (biomesToSpawn.Count > 0)
         {
             // pick a random seed point
-            int seedPointIndex = Random.Range(0, biomesToSpawn.Count);
+            int seedPointIndex = generationData.Random(0, biomesToSpawn.Count);
 
             // extract the biome index
             byte biomeIndex = biomesToSpawn[seedPointIndex];
@@ -59,7 +60,7 @@ public class BiomeGenerator_OozeBased : BaseBiomeMapGenerator
             // remove seed point
             biomesToSpawn.RemoveAt(seedPointIndex);
 
-            Perform_SpawnIndividualBiome(config, biomeIndex, mapResolution);
+            Perform_SpawnIndividualBiome(generationData, biomeIndex, mapResolution);
         }
 
 #if UNITY_EDITOR
@@ -69,7 +70,7 @@ public class BiomeGenerator_OozeBased : BaseBiomeMapGenerator
         {
             for (int x = 0; x < mapResolution; ++x)
             {
-                float hue = ((float)BiomeMap_LowResolution[x, y] / (float)config.NumBiomes);
+                float hue = ((float)BiomeMap_LowResolution[x, y] / (float)generationData.Config.NumBiomes);
 
                 biomeMapTexture.SetPixel(x, y, Color.HSVToRGB(hue, 0.75f, 0.75f));
             }
@@ -94,16 +95,16 @@ public class BiomeGenerator_OozeBased : BaseBiomeMapGenerator
     /*
     Use Ooze based generation from here: https://www.procjam.com/tutorials/en/ooze/
     */
-    void Perform_SpawnIndividualBiome(ProcGenConfigSO config, byte biomeIndex, int mapResolution)
+    void Perform_SpawnIndividualBiome(ProcGenManager.GenerationData generationData, byte biomeIndex, int mapResolution)
     {
         // cache biome config
-        BiomeConfigSO biomeConfig = config.Biomes[biomeIndex].Biome;
+        BiomeConfigSO biomeConfig = generationData.Config.Biomes[biomeIndex].Biome;
 
         // pick spawn location
-        Vector2Int spawnLocation = new Vector2Int(Random.Range(0, mapResolution), Random.Range(0, mapResolution));
+        Vector2Int spawnLocation = new Vector2Int(generationData.Random(0, mapResolution), generationData.Random(0, mapResolution));
 
         // pick the starting intensity
-        float startIntensity = Random.Range(biomeConfig.MinIntensity, biomeConfig.MaxIntensity);
+        float startIntensity = generationData.Random(biomeConfig.MinIntensity, biomeConfig.MaxIntensity);
 
         // setup working list
         Queue<Vector2Int> workingList = new Queue<Vector2Int>();
@@ -143,7 +144,7 @@ public class BiomeGenerator_OozeBased : BaseBiomeMapGenerator
                 visited[neighbourLocation.x, neighbourLocation.y] = true;
 
                 // work out and store neighbour strength;
-                float decayAmount = Random.Range(biomeConfig.MinDecayRate, biomeConfig.MaxDecayRate) * NeighbourOffsets[neighbourIndex].magnitude;
+                float decayAmount = generationData.Random(biomeConfig.MinDecayRate, biomeConfig.MaxDecayRate) * NeighbourOffsets[neighbourIndex].magnitude;
                 float neighbourStrength = targetIntensity[workingLocation.x, workingLocation.y] - decayAmount;
                 targetIntensity[neighbourLocation.x, neighbourLocation.y] = neighbourStrength;
 

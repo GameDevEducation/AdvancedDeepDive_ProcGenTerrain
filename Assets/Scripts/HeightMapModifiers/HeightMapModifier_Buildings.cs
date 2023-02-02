@@ -132,7 +132,7 @@ public class HeightMapModifier_Buildings : BaseHeightMapModifier
 
             for (int buildingIndex = 0; buildingIndex < building.NumToSpawn && spawnLocations.Count > 0; ++ buildingIndex)
             {
-                int spawnIndex = Random.Range(0, spawnLocations.Count);
+                int spawnIndex = generationData.Random(0, spawnLocations.Count);
                 var spawnPos = spawnLocations[spawnIndex];
                 spawnLocations.RemoveAt(spawnIndex);
 

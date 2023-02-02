@@ -13,7 +13,7 @@ public class HeightMapModifier_Smooth : BaseHeightMapModifier
 
     public override void Execute(ProcGenManager.GenerationData generationData, int biomeIndex = -1, BiomeConfigSO biome = null)
     {
-        if (generationData.BiomeMap != null)
+        if (biome != null)
         {
             Debug.LogError("HeightMapModifier_Smooth is not supported as a per biome modifier [" + gameObject.name + "]");
             return;

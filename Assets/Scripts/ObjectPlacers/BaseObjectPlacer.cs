@@ -1,6 +1,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using static ProcGenManager;
 
 #if UNITY_EDITOR
 using UnityEditor;
@@ -67,12 +68,12 @@ public class BaseObjectPlacer : MonoBehaviour
             config.NormalisedWeighting = config.Weighting / weightSum;
     }
     
-    protected virtual void ExecuteSimpleSpawning(ProcGenConfigSO globalConfig, Transform objectRoot, List<Vector3> candidateLocations)
+    protected virtual void ExecuteSimpleSpawning(ProcGenManager.GenerationData generationData, Transform objectRoot, List<Vector3> candidateLocations)
     {
         foreach (var spawnConfig in Objects)
         {
             // pick a random prefab
-            var prefab = spawnConfig.Prefabs[Random.Range(0, spawnConfig.Prefabs.Count)];
+            var prefab = spawnConfig.Prefabs[generationData.Random(0, spawnConfig.Prefabs.Count)];
 
             // determine the spawn count
             float baseSpawnCount = Mathf.Min(MaxSpawnCount, candidateLocations.Count * TargetDensity);
@@ -83,14 +84,14 @@ public class BaseObjectPlacer : MonoBehaviour
             for (int index = 0; index < numToSpawn; ++index)
             {
                 // pick a random location to spawn at
-                int randomLocationIndex = Random.Range(0, candidateLocations.Count);
+                int randomLocationIndex = generationData.Random(0, candidateLocations.Count);
                 Vector3 spawnLocation = candidateLocations[randomLocationIndex];
 
                 // height is invalid?
                 bool isValid = true;
-                if (spawnLocation.y < globalConfig.WaterHeight && !spawnConfig.CanGoInWater)
+                if (spawnLocation.y < generationData.Config.WaterHeight && !spawnConfig.CanGoInWater)
                     isValid = false;
-                if (spawnLocation.y >= globalConfig.WaterHeight && !spawnConfig.CanGoAboveWater)
+                if (spawnLocation.y >= generationData.Config.WaterHeight && !spawnConfig.CanGoAboveWater)
                     isValid = false;
 
                 // skip if outside of height limits
@@ -115,33 +116,33 @@ public class BaseObjectPlacer : MonoBehaviour
                 // remove the location if chosen
                 candidateLocations.RemoveAt(randomLocationIndex);
 
-                SpawnObject(prefab, spawnLocation, objectRoot);
+                SpawnObject(generationData, prefab, spawnLocation);
             }
 
             Debug.Log($"Placed {numPlaced} objects out of {numToSpawn}");
         }
     }
 
-    protected virtual void SpawnObject(GameObject prefab, Vector3 spawnLocation, Transform objectRoot)
+    protected virtual void SpawnObject(ProcGenManager.GenerationData generationData, GameObject prefab, Vector3 spawnLocation)
     {
-        Quaternion spawnRotation = Quaternion.Euler(0f, Random.Range(0f, 360f), 0f);
-        Vector3 positionOffset = new Vector3(Random.Range(-MaxPositionJitter, MaxPositionJitter),
+        Quaternion spawnRotation = Quaternion.Euler(0f, generationData.Random(0f, 360f), 0f);
+        Vector3 positionOffset = new Vector3(generationData.Random(-MaxPositionJitter, MaxPositionJitter),
                                              0,
-                                             Random.Range(-MaxPositionJitter, MaxPositionJitter));
+                                             generationData.Random(-MaxPositionJitter, MaxPositionJitter));
 
         // instantiate the prefab
 #if UNITY_EDITOR
         if (Application.isPlaying)
-            Instantiate(prefab, spawnLocation + positionOffset, spawnRotation, objectRoot);
+            Instantiate(prefab, spawnLocation + positionOffset, spawnRotation, generationData.ObjectRoot);
         else
         {
-            var spawnedGO = PrefabUtility.InstantiatePrefab(prefab, objectRoot) as GameObject;
+            var spawnedGO = PrefabUtility.InstantiatePrefab(prefab, generationData.ObjectRoot) as GameObject;
             spawnedGO.transform.position = spawnLocation + positionOffset;
             spawnedGO.transform.rotation = spawnRotation;
             Undo.RegisterCreatedObjectUndo(spawnedGO, "Placed object");
         }
 #else
-        Instantiate(Prefab, spawnLocation + positionOffset, spawnRotation, objectRoot);
+        Instantiate(Prefab, spawnLocation + positionOffset, spawnRotation, generationData.ObjectRoot);
 #endif // UNITY_EDITOR 
     }
 }

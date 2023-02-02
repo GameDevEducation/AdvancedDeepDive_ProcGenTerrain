@@ -17,7 +17,7 @@ public class HeightMapModifier_Random : BaseHeightMapModifier
                     continue;
                 
                 // calculate the new height
-                float newHeight = generationData.HeightMap[x, y] + (Random.Range(-HeightDelta, HeightDelta) / generationData.HeightmapScale.y);
+                float newHeight = generationData.HeightMap[x, y] + (generationData.Random(-HeightDelta, HeightDelta) / generationData.HeightmapScale.y);
 
                 // blend based on strength
                 generationData.HeightMap[x, y] = Mathf.Lerp(generationData.HeightMap[x, y], newHeight, Strength);

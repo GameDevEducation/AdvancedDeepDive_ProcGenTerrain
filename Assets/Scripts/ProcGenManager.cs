@@ -28,6 +28,8 @@ public class ProcGenManager : MonoBehaviour
 {
     public class GenerationData
     {
+        System.Random RNGenerator;
+
         public ProcGenManager Manager;
         public ProcGenConfigSO Config;
         public Transform ObjectRoot;
@@ -49,10 +51,27 @@ public class ProcGenManager : MonoBehaviour
         public List<int[,]> DetailLayerMaps;
         public int DetailMapResolution;
         public int MaxDetailsPerPatch;
+
+        public GenerationData(int inSeed)
+        {
+            RNGenerator = new System.Random(inSeed);
+        }
+
+        public int Random(int minInclusive, int maxExclusive)
+        {
+            return RNGenerator.Next(minInclusive, maxExclusive);
+        }
+
+        public float Random(float minInclusive, float maxInclusive)
+        {
+            return Mathf.Lerp(minInclusive, maxInclusive, (float)RNGenerator.NextDouble());
+        }
     }
 
     [SerializeField] ProcGenConfigSO Config;
     [SerializeField] Terrain TargetTerrain;
+    [SerializeField] int Seed;
+    [SerializeField] bool RandomiseSeedEveryTime = true;
 
     [Header("Debugging")]
     [SerializeField] bool DEBUG_TurnOffObjectPlacers = false;
@@ -61,7 +80,22 @@ public class ProcGenManager : MonoBehaviour
 
     public IEnumerator AsyncRegenerateWorld(System.Action<EGenerationStage, string> reportStatusFn = null)
     {
-        Data = new GenerationData();
+        int workingSeed = Seed;
+
+        if (RandomiseSeedEveryTime)
+        {
+            workingSeed = Random.Range(int.MinValue, int.MaxValue);
+
+#if UNITY_EDITOR
+            if (!Application.isPlaying)
+            {
+                Undo.RecordObject(this, "Randomise seed");
+                Seed = workingSeed;
+            }
+#endif // UNITY_EDITOR
+        }
+
+        Data = new GenerationData(workingSeed);
 
         // cache the core info
         Data.Manager = this;
@@ -73,6 +107,7 @@ public class ProcGenManager : MonoBehaviour
         Data.AlphaMapResolution = TargetTerrain.terrainData.alphamapResolution;
         Data.DetailMapResolution = TargetTerrain.terrainData.detailResolution;
         Data.MaxDetailsPerPatch = TargetTerrain.terrainData.detailResolutionPerPatch;
+        Data.HeightmapScale = TargetTerrain.terrainData.heightmapScale;
 
         if (reportStatusFn != null) reportStatusFn.Invoke(EGenerationStage.Beginning, "Beginning Generation");
         yield return new WaitForSeconds(1f);

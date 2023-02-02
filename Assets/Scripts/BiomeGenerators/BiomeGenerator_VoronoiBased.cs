@@ -24,9 +24,9 @@ public class BiomeGenerator_VoronoiBased : BaseBiomeMapGenerator
 
                 int centreX = Mathf.RoundToInt((cellX + 0.5f) * cellSize);
 
-                biomeSeeds[cellIndex].x = centreX + Random.Range(-cellSize / 2, cellSize / 2);
-                biomeSeeds[cellIndex].y = centreY + Random.Range(-cellSize / 2, cellSize / 2);
-                biomeSeeds[cellIndex].z = Random.Range(0, generationData.Config.NumBiomes);
+                biomeSeeds[cellIndex].x = centreX + generationData.Random(-cellSize / 2, cellSize / 2);
+                biomeSeeds[cellIndex].y = centreY + generationData.Random(-cellSize / 2, cellSize / 2);
+                biomeSeeds[cellIndex].z = generationData.Random(0, generationData.Config.NumBiomes);
             }
         }
 

@@ -38,7 +38,7 @@ public class DetailPainter_Random : BaseDetailPainter
                 {
                     // check if noise test passed?
                     float noiseValue = Mathf.PerlinNoise(x * config.NoiseScale, y * config.NoiseScale);
-                    if (Random.Range(0f, 1f) >= noiseValue)
+                    if (generationData.Random(0f, 1f) >= noiseValue)
                     {
                         int layer = generationData.Manager.GetDetailLayerForTerrainDetail(config.DetailToPaint);
                         generationData.DetailLayerMaps[layer][x, y] = Mathf.FloorToInt(Strength * config.IntensityModifier * generationData.MaxDetailsPerPatch);

@@ -45,6 +45,6 @@ public class ObjectPlacer_Perlin : BaseObjectPlacer
         // get potential spawn location
         List<Vector3> candidateLocations = GetFilteredLocationsForBiome(generationData, biomeIndex);
 
-        ExecuteSimpleSpawning(generationData.Config, generationData.ObjectRoot, candidateLocations);
+        ExecuteSimpleSpawning(generationData, generationData.ObjectRoot, candidateLocations);
     }
 }

@@ -1,6 +1,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using static ProcGenManager;
 
 public class HeightMapModifier_Islands : BaseHeightMapModifier
 {
@@ -18,17 +19,17 @@ public class HeightMapModifier_Islands : BaseHeightMapModifier
     {
         for (int island = 0; island < NumIslands; ++island)
         {
-            PlaceIsland(generationData.Config, generationData.MapResolution, generationData.HeightMap, generationData.HeightmapScale, generationData.BiomeMap, biomeIndex, biome);
+            PlaceIsland(generationData, generationData.MapResolution, generationData.HeightMap, generationData.HeightmapScale, generationData.BiomeMap, biomeIndex, biome);
         }
     }
 
-    void PlaceIsland(ProcGenConfigSO globalConfig, int mapResolution, float[,] heightMap, Vector3 heightmapScale, byte[,] biomeMap = null, int biomeIndex = -1, BiomeConfigSO biome = null)
+    void PlaceIsland(ProcGenManager.GenerationData generationData, int mapResolution, float[,] heightMap, Vector3 heightmapScale, byte[,] biomeMap = null, int biomeIndex = -1, BiomeConfigSO biome = null)
     {
-        int workingIslandSize = Mathf.RoundToInt(Random.Range(MinIslandSize, MaxIslandSize) / heightmapScale.x);
-        float workingIslandHeight = (Random.Range(MinIslandHeight, MaxIslandHeight) + globalConfig.WaterHeight) / heightmapScale.y;
+        int workingIslandSize = Mathf.RoundToInt(generationData.Random(MinIslandSize, MaxIslandSize) / heightmapScale.x);
+        float workingIslandHeight = (generationData.Random(MinIslandHeight, MaxIslandHeight) + generationData.Config.WaterHeight) / heightmapScale.y;
 
-        int centreX = Random.Range(workingIslandSize, mapResolution - workingIslandSize);
-        int centreY = Random.Range(workingIslandSize, mapResolution - workingIslandSize);
+        int centreX = generationData.Random(workingIslandSize, mapResolution - workingIslandSize);
+        int centreY = generationData.Random(workingIslandSize, mapResolution - workingIslandSize);
 
         for (int islandY = -workingIslandSize; islandY <= workingIslandSize; islandY++)
         {

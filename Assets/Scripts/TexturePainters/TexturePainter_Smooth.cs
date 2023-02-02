@@ -8,7 +8,7 @@ public class TexturePainter_Smooth : BaseTexturePainter
 
     public override void Execute(ProcGenManager.GenerationData generationData, int biomeIndex = -1, BiomeConfigSO biome = null)
     {
-        if (generationData.BiomeMap != null)
+        if (biome != null)
         {
             Debug.LogError("TexturePainter_Smooth is not supported as a per biome modifier [" + gameObject.name + "]");
             return;

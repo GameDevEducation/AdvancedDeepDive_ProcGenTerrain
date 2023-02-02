@@ -38,7 +38,7 @@ public class TexturePainter_Random : BaseTexturePainter
                 {
                     // check if noise test passed?
                     float noiseValue = Mathf.PerlinNoise(x * config.NoiseScale, y * config.NoiseScale);
-                    if (Random.Range(0f, 1f) >= noiseValue)
+                    if (generationData.Random(0f, 1f) >= noiseValue)
                     {
                         int layer = generationData.Manager.GetLayerForTexture(config.TextureToPaint);
                         generationData.AlphaMaps[x, y, layer] = Strength * config.IntensityModifier;
