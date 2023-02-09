@@ -34,33 +34,22 @@ public class BiomeGenerator_OozeBased : BaseBiomeMapGenerator
 
         // setup space for the seed points
         int numSeedPoints = Mathf.FloorToInt(mapResolution * mapResolution * BiomeSeedPointDensity);
-        List<byte> biomesToSpawn = new List<byte>(numSeedPoints);
-
-        // populate the biomes to spawn based on weightings
-        float totalBiomeWeighting = generationData.Config.TotalWeighting;
-        for (int biomeIndex = 0; biomeIndex < generationData.Config.NumBiomes; ++biomeIndex)
-        {
-            int numEntries = Mathf.RoundToInt(numSeedPoints * generationData.Config.Biomes[biomeIndex].Weighting / totalBiomeWeighting);
-
-            for (int entryIndex = 0; entryIndex < numEntries; ++entryIndex)
-            {
-                biomesToSpawn.Add((byte)biomeIndex);
-            }
-        }
+        PrepareToSpawnBiomes(generationData, numSeedPoints);
 
         // spawn the individual biomes
-        while (biomesToSpawn.Count > 0)
+        Vector2 normalisedPosition = Vector2.zero;
+        for (int biomeCount = 0; biomeCount < numSeedPoints; biomeCount++)
         {
-            // pick a random seed point
-            int seedPointIndex = generationData.Random(0, biomesToSpawn.Count);
+            // pick spawn location
+            Vector2Int spawnLocation = new Vector2Int(generationData.Random(0, mapResolution), generationData.Random(0, mapResolution));
+
+            normalisedPosition.x = (((float)spawnLocation.x / (float)mapResolution) - 0.5f) * 2f;
+            normalisedPosition.y = (((float)spawnLocation.y / (float)mapResolution) - 0.5f) * 2f;
 
             // extract the biome index
-            byte biomeIndex = biomesToSpawn[seedPointIndex];
+            byte biomeIndex = PickBiomeType(generationData, normalisedPosition);
 
-            // remove seed point
-            biomesToSpawn.RemoveAt(seedPointIndex);
-
-            Perform_SpawnIndividualBiome(generationData, biomeIndex, mapResolution);
+            Perform_SpawnIndividualBiome(generationData, biomeIndex, spawnLocation, mapResolution);
         }
 
 #if UNITY_EDITOR
@@ -95,13 +84,10 @@ public class BiomeGenerator_OozeBased : BaseBiomeMapGenerator
     /*
     Use Ooze based generation from here: https://www.procjam.com/tutorials/en/ooze/
     */
-    void Perform_SpawnIndividualBiome(ProcGenManager.GenerationData generationData, byte biomeIndex, int mapResolution)
+    void Perform_SpawnIndividualBiome(ProcGenManager.GenerationData generationData, byte biomeIndex, Vector2Int spawnLocation, int mapResolution)
     {
         // cache biome config
         BiomeConfigSO biomeConfig = generationData.Config.Biomes[biomeIndex].Biome;
-
-        // pick spawn location
-        Vector2Int spawnLocation = new Vector2Int(generationData.Random(0, mapResolution), generationData.Random(0, mapResolution));
 
         // pick the starting intensity
         float startIntensity = generationData.Random(biomeConfig.MinIntensity, biomeConfig.MaxIntensity);

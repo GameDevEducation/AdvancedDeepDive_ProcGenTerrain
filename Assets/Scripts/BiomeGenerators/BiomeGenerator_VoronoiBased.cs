@@ -12,8 +12,11 @@ public class BiomeGenerator_VoronoiBased : BaseBiomeMapGenerator
     {
         int cellSize = Mathf.CeilToInt((float)generationData.MapResolution / NumCells);
 
+        PrepareToSpawnBiomes(generationData, NumCells * NumCells);
+
         // generate our seed points
         Vector3Int[] biomeSeeds = new Vector3Int[NumCells * NumCells];
+        Vector2 normalisedPosition = Vector2.zero;
         for (int cellY = 0; cellY < NumCells; cellY++) 
         {
             int centreY = Mathf.RoundToInt((cellY + 0.5f) * cellSize);
@@ -26,7 +29,14 @@ public class BiomeGenerator_VoronoiBased : BaseBiomeMapGenerator
 
                 biomeSeeds[cellIndex].x = centreX + generationData.Random(-cellSize / 2, cellSize / 2);
                 biomeSeeds[cellIndex].y = centreY + generationData.Random(-cellSize / 2, cellSize / 2);
-                biomeSeeds[cellIndex].z = generationData.Random(0, generationData.Config.NumBiomes);
+
+                normalisedPosition.x = ((float)biomeSeeds[cellIndex].x / (float)generationData.MapResolution);
+                normalisedPosition.x = (normalisedPosition.x - 0.5f) * 2f;
+
+                normalisedPosition.y = ((float)biomeSeeds[cellIndex].y / (float)generationData.MapResolution);
+                normalisedPosition.y = (normalisedPosition.y - 0.5f) * 2f;
+
+                biomeSeeds[cellIndex].z = PickBiomeType(generationData, normalisedPosition);
             }
         }
 

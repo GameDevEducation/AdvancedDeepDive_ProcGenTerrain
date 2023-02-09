@@ -457,7 +457,7 @@ public class ProcGenManager : MonoBehaviour
         {
             for (int x = 0; x < Data.AlphaMapResolution; ++x)
             {
-                Data.SlopeMap[x, y] = TargetTerrain.terrainData.GetInterpolatedNormal((float) x / Data.AlphaMapResolution, (float) y / Data.AlphaMapResolution).y;
+                Data.SlopeMap[x, y] = TargetTerrain.terrainData.GetSteepness((float) x / Data.AlphaMapResolution, (float) y / Data.AlphaMapResolution) / 90f;
             }
         }          
     }

@@ -40,4 +40,15 @@ public class ProcGenConfigSO : ScriptableObject
             return sum;
         }
     }
+
+    public byte GetIndexForBiome(BiomeConfigSO biome)
+    {
+        for (int index = 0; index < Biomes.Count; ++index)
+        {
+            if (Biomes[index].Biome == biome)
+                return (byte)index;
+        }
+
+        return byte.MaxValue;
+    }
 }

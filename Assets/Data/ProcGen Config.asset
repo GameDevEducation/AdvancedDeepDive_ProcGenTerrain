@@ -23,7 +23,7 @@ MonoBehaviour:
     Weighting: 0.5
   - Biome: {fileID: 11400000, guid: 9e3ce2a4747672b4d9393ab5cfb84951, type: 2}
     Weighting: 0.5
-  BiomeGenerators: {fileID: 3274705262442174759, guid: 7661937c50b82d64fa7e452508e89f3b, type: 3}
+  BiomeGenerators: {fileID: 3274705262442174759, guid: 105d4a8fec192304994211a228b7d03c, type: 3}
   InitialHeightModifier: {fileID: 2641592558679900223, guid: 298e1b49f1e72764eb82f4f2df9d3cc0, type: 3}
   HeightPostProcessingModifier: {fileID: 2641592558679900223, guid: e42e1cac29145844c980a60fbb440003, type: 3}
   PaintingPostProcessingModifier: {fileID: 4273326731991161223, guid: f9e71b43cbedc7045963f7b873e0aa36, type: 3}
