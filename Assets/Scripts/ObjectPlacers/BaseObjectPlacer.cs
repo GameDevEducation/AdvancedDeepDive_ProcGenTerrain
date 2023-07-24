@@ -142,7 +142,7 @@ public class BaseObjectPlacer : MonoBehaviour
             Undo.RegisterCreatedObjectUndo(spawnedGO, "Placed object");
         }
 #else
-        Instantiate(Prefab, spawnLocation + positionOffset, spawnRotation, generationData.ObjectRoot);
+        Instantiate(prefab, spawnLocation + positionOffset, spawnRotation, generationData.ObjectRoot);
 #endif // UNITY_EDITOR 
     }
 }
