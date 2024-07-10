@@ -301,6 +301,7 @@ public class ProcGenManager : MonoBehaviour
 
         string scenePath = System.IO.Path.GetDirectoryName(SceneManager.GetActiveScene().path);
 
+        Data = new GenerationData(0);
         Perform_GenerateTextureMapping();
 
         // generate all of the layers
