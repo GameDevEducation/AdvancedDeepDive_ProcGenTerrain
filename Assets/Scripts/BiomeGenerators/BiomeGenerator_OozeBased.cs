@@ -160,7 +160,7 @@ public class BiomeGenerator_OozeBased : BaseBiomeMapGenerator
             D = BiomeMap_LowResolution[lowResX + 1, lowResY + 1];
 
         // perform bilinear filtering
-        float filteredIndex = A * (1 - fractionX) * (1 - fractionY) + B * fractionX * (1 - fractionY) *
+        float filteredIndex = A * (1 - fractionX) * (1 - fractionY) + B * fractionX * (1 - fractionY) +
                               C * fractionY * (1 - fractionX) + D * fractionX * fractionY;
 
         // build an array of the possible biomes based on the values used to interpolate
